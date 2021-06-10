@@ -16,13 +16,12 @@ def kill(instance):
 
 class Repl:
     def __init__(self, lang, pipeout, on_close):
-        """
-        Spawns a container with the interpreter for the given language.
-        Returns an instance of the container.
+        # Genera un contenedor con el intérprete para el idioma dado.
+        # Devuelve una instancia del contenedor.
 
-        pipeout is a function that takes a string and sends it back to the user.
-        Use it to send standard output from the container.
-        """
+        # pipeout es una función que toma una cadena y la envía de vuelta al usuario.
+        # Úsada para enviar salida estándar desde el contenedor.
+
         self.client = docker.APIClient()
 
         self.on_close = on_close
