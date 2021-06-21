@@ -78,29 +78,35 @@ def default(update, context):
 # Callback handlers //seleccion del interprete button
 # mode 1
 def button(update, context):
+    print(context.chat_data)
     if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data:
         query = update.callback_query
         # print(query)
         message = query.message
-        print(message)
+        # print(message)
         lang = query.data
-        print(lang)
+        # print(lang)
         message.edit_reply_markup()  # remueve los botones
         shell = {
             # "python": "python (Python)",
             "java": "jshell (Java)"
         }[lang]
         message.reply_text("Ahora iniciando" + shell + " interprete...")
-
+        # salida del interprete
         def pipeout(out):
-            if re.match("\S", out):  # contiene caracteres que no son espacios en blanco
+            # expresion regular
+            # controlamos que la cadena no contengan espacios en blanco para reenviar texto
+            if re.match("\S", out): 
                 message.reply_text(out)
-
+            else:
+                pass
+        # elimina del item chat_data la identificacion contenedor
         def on_close():
             context.chat_data.pop("container", None)
-
+            # print('\n borrado',context.chat_data)
         container = repl.launch(lang, pipeout, on_close)
         context.chat_data["container"] = container
+        # print('\n',context.chat_data)
     else:
         print(context.chat_data["mode"])  # debug statement
 
@@ -138,9 +144,7 @@ def main():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("mode", mode))
     dp.add_handler(CommandHandler("exit", exit))
-    # dp.add_handler(CommandHandler("run", run))
     dp.add_handler(MessageHandler(Filters.text, default))
-    # dp.add_handler(MessageHandler(Filters.document, document))
 
     dp.add_handler(CallbackQueryHandler(button))
 

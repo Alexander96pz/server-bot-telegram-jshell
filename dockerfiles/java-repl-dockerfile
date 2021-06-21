@@ -1,0 +1,3 @@
+FROM java
+RUN jshell # Realice la configuración por primera vez
+CMD jshell

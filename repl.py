@@ -27,57 +27,33 @@ class Repl:
         self.on_close = on_close
         self.lang = lang
 
-        # Language selection
-        if lang == "python":
-            self.container = self.client.create_container(
-                image = "python-repl",
-                stdin_open = True,
-                detach = True,
-                tty = True # If this is false, the Python shell doesn't bother outputting anything
-            )
-        elif lang == "java":
+        # Language seleccion
+        if lang == "java":
             self.container = self.client.create_container(
                 image = "java-repl",
                 stdin_open = True,
                 detach = True,
                 tty = False
             )
-        elif lang == "c":
-            self.container = self.client.create_container(
-                image = "c-repl",
-                stdin_open = True,
-                detach = True,
-                tty = False
-            )
-        elif lang == "source":
-            self.container = self.client.create_container(
-                image = "source-repl",
-                command = "node dist/repl/repl.js 4",
-                stdin_open = True,
-                detach = True,
-                tty = False # If this is true, you get ANSI colour escape sequences in the output
-            )
         
-        # Start the container
+        # Inicializo the container
         self.client.start(self.container)
         
         # Get sockets
         self.input = self.client.attach_socket(self.container, params={'stdin': 1, 'stream': 1})._sock
         self.output = self.client.attach_socket(self.container, params={'stdout': 1, 'stream': 1})._sock
 
-        # Initialise listener
+        # Inicializo listener
         self.listener = threading.Thread(target = self.__listen, args = [pipeout])
         self.listener.start()
 
     def pipein(self, text):
-        """
-        Sends the text string into the container as standard input.
-        There is no need to return anything.
-        """
-        self.input.send(text.encode('utf-8')) # Convert to bytes
+        # Envía la cadena de texto al contenedor como entrada estándar.
+        # No es necesario devolver nada.
+        self.input.send(text.encode('utf-8')) # Convercion a bytes
 
     def kill(self):
-        self.client.stop(self.container) # Stop the container
+        self.client.stop(self.container) # Elimino/Stop el contenedor
 
     def __listen(self, pipeout):
         logs = self.client.logs(
@@ -85,11 +61,11 @@ class Repl:
             stdout = True,
             stream = True
         )
-        if self.lang == "python": # Python REPL flushes stdout after each char
+        if self.lang == "python": # Python REPL descarga stdout después de cada carácterr
             sb = []
             for line in logs:
                 decoded_line = line.decode('utf-8')
-                # Only pipeout upon newline
+                # Solo canalización en nueva línea
                 if '\n' in decoded_line:
                     pipeout(''.join(sb))
                     sb = []
@@ -99,6 +75,6 @@ class Repl:
             for line in logs:
                 pipeout(line.decode('utf-8'))
         
-        # Once this code is reached, the container is dead
+        # Una vez que se alcanza este código, el contenedor está muerto
         self.on_close()
-        self.client.remove_container(self.container) # Remove the container
+        self.client.remove_container(self.container) # elimino el container
