@@ -4,16 +4,34 @@ import logging
 import sys
 import re
 import os
+# BASE DE DATOS
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import NoResultFound
+from models.user import User,Base
+from config.bd import engine
 
 from api_key import API_KEY
 import repl
-
+# 
+Session = sessionmaker(engine)
+session = Session()
 # Controladores de Comandos
 # comand /start
 def start(update, context):
     # Mensaje Inicial
+    print(update)
     if "mode" not in context.chat_data:
         context.chat_data["mode"] = 0
+    user=User(id_user=update._effective_user.id,
+        first_name=update._effective_user.first_name,
+        is_bot=update._effective_user.is_bot,
+        username=update._effective_user.username,
+        lenguaje_code=update._effective_user.language_code)
+    session.add(user)
+    try:
+        session.commit()
+    except Exception:
+        os.error("error add user in the database")
     update.message.reply_text("Hola que tal!")
     update.message.reply_text("Este es un espació dedicado para poner en practica tus habilidades de programacion")
     update.message.reply_text("Para iniciar, por favor usa /mode.")
@@ -38,7 +56,6 @@ def mode(update, context):
                                 #   +"'/mode 2' - Batch mode\n"
                                   )
 
-
 def exit(update, context):
     # Elimina cualquier instancia de contenedor que se esté ejecutando actualmente
     if "container" in context.chat_data:
@@ -49,8 +66,6 @@ def exit(update, context):
         update.message.reply_text("Contenedor Finalizado")
     else:
         update.message.reply_text("Error: Interpreter not started or already terminated")
-
-
 
 # Message handlers
 def default(update, context):
@@ -134,22 +149,27 @@ def drop_command(message, command):
 
 # Initializacion del bot
 def main():
+    try:
+        Base.metadata.create_all(engine)
+        print("connection DataBase sucessfully")
+        logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
+        # actualizaciones provenientes de telegram
+        updater = Updater(API_KEY, use_context=True)
+        # despachador nos permite clasificar las actualizaciones 
+        dp = updater.dispatcher
+        # Add handlers//controladores
+        dp.add_handler(CommandHandler("start", start))
+        dp.add_handler(CommandHandler("mode", mode))
+        dp.add_handler(CommandHandler("exit", exit))
+        dp.add_handler(MessageHandler(Filters.text, default))
+
+        dp.add_handler(CallbackQueryHandler(button))
+
+        updater.start_polling()
+        updater.idle()
+    except Exception:
+        os.error("connection failed DataBase")
     # Log stdout //nos ayudara a saber cuando y porque no funcionan las cosas
-    logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
-    # actualizaciones provenientes de telegram
-    updater = Updater(API_KEY, use_context=True)
-    # despachador nos permite clasificar las actualizaciones 
-    dp = updater.dispatcher
-    # Add handlers//controladores
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("mode", mode))
-    dp.add_handler(CommandHandler("exit", exit))
-    dp.add_handler(MessageHandler(Filters.text, default))
-
-    dp.add_handler(CallbackQueryHandler(button))
-
-    updater.start_polling()
-    updater.idle()
 
 
 if __name__ == '__main__':
