@@ -16,6 +16,8 @@ def pipein(instance, text, message):
 def kill(instance):
     instance.kill()
 
+def next(instance):
+    instance.NextQuestion()
 # metodo para limpiar mensajes de salida del REPL
 def cleanResponse(listas):
     for l in listas:
@@ -73,7 +75,6 @@ class Repl:
         self.id_message=message.id_message
         self.id_user = message.fk_id_user
         self.text=text
-        self.id_question+=1
         self.input.send(text.encode('utf-8')) # Convercion a bytes
     # Parar un contenedor
     def kill(self):
@@ -96,12 +97,18 @@ class Repl:
                 isError=validateError(lines)
                 out=cleanResponse(lines)
                 lines=[]
+                # if isError:
+                #     self.id_question +=1
                 pipeout(out,isError,self.text,self.id_user,self.id_message,self.id_question)
             else:
                 lines.append(decode_line)
         # Una vez que se alcanza este código, el contenedor está muerto
         self.on_close()
         self.client.remove_container(self.container) # elimino el container
+    
+    def NextQuestion(self):
+        self.id_question+=1
+
     # def setQuestion(self,question):
     #     self.id_question=question
     # def getQuestion(self):

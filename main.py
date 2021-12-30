@@ -5,13 +5,13 @@ import sys
 import re
 import os
 # BASE DE DATOS
-
-# from sqlalchemy.exc import NoResultFound
 from config.bd import *
-# from models.user import User,Base
-# from models.message import Message
-from config.bd import engine,Base,User,Message
-# Session = sessionmaker(bind=engine)
+from models.user import findUser,addUser
+from models.question import getQuestion
+from models.message import addMessage
+from models.answer import addAnswer,find_Answer
+
+# from config.bd import engine,Base,Message
 
 from api_key import API_KEY
 import repl
@@ -35,9 +35,8 @@ def start(update, context):
         else:
             try:
                 message=addMessage(update,user.id_user)
-                print("message add to the database")
-            except:
-                print("message no add to the database")
+            except Exception as err:
+                print("message no add to the database: ",err)
     except Exception as err:   
         print("error add user in the database!: ",err)
     update.message.reply_text("Hola que tal!")
@@ -129,6 +128,8 @@ def button(update, context):
                         message.reply_text(o)
                     if not isError:
                         question=getQuestion(id_question+1)
+                        repl.next(context.chat_data["container"])
+
                         if question is not None:
                             message.reply_text(question.text_question)
                         else:
