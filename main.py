@@ -15,6 +15,7 @@ from config.bd import engine,Base,User,Message
 
 from api_key import API_KEY
 import repl
+
 # Controladores de Comandos
 # comand /start
 def start(update, context):
@@ -68,22 +69,25 @@ def exit(update, context):
         update.message.reply_text("Error: Interpreter not started or already terminated")
 
 # Message handlers
+
 def default(update, context):
     # Llamado en cualquier mensaje de texto que no sea de orden
     #  En el modo 1, canaliza el mensaje al contenedor si existe.
     if "mode" in context.chat_data and context.chat_data["mode"] == 1:
         if "container" in context.chat_data:
             # reemplazar cadenas \t iniciales
+            message=addMessage(update,update._effective_user.id)
             raw_input = update.message.text
             indent = 0 #sangrìa
             while raw_input[:2] == "\\t":
                 indent += 1
                 raw_input = raw_input[2:]
+                print(raw_input + " While")
             # literal \n string sent - send blank line
             if raw_input == "\\n":
                 raw_input = ""
             stdin = indent * "\t" + raw_input
-            repl.pipein(context.chat_data["container"], stdin + "\n")
+            repl.pipein(context.chat_data["container"], stdin + "\n",message)
         else:
             update.message.reply_text("Error: Intérprete no iniciada o aun finalizada")
     else:
@@ -103,29 +107,46 @@ def button(update, context):
             "java": "jshell (Java)"
         }[lang]
         # message.reply_text("Ahora iniciando " + shell + " interprete...")
-        question=getQuestion(1)
+        answer=find_Answer(update._effective_user.id)
+        if answer is not None:
+            question=getQuestion(answer.id_question+1) 
+        else:
+            question=getQuestion(1)
         # salida del interprete
-        def pipeout(out,isError):
+        def pipeout(out,isError,text,id_user,id_message,id_question):
             # expresion regular
-            print(isError)
             # si la lista esta vacia?
             if not out:
                 pass
             else:
-                for o in out:
-                    # if re.match("\S", o):
+                try:
+                    addAnswer(id_question,id_message,id_user,isError)
+                except Exception:
+                    print("Error adding Answer")
+                finally:
+                    for o in out:
+                        # if re.match("\S", o):
                         message.reply_text(o)
+                    if not isError:
+                        question=getQuestion(id_question+1)
+                        if question is not None:
+                            message.reply_text(question.text_question)
+                        else:
+                            message.reply_text("Felicidades! terminaste con exito")
+                            
                 # controlamos que la cadena no contengan espacios en blanco para reenviar texto
         # elimina del item chat_data la identificacion contenedor
         def on_close():
             context.chat_data.pop("container", None)
 
-        container = repl.launch(lang, pipeout, on_close)
-        message.reply_text(question.text_question)
-        context.chat_data["container"] = container  
+        if(question is None):
+            message.reply_text("Has finalizado el cuestionario correctamente")
+        else:
+            container = repl.launch(lang, pipeout, on_close,question.id_question)
+            message.reply_text(question.text_question)
+            context.chat_data["container"] = container  
     # else:
     #     print("Esto imprime",context.chat_data["mode"])  # debug statement
-
 
 # mezcla de funciones
 def drop_data(update, context):
@@ -140,13 +161,11 @@ def drop_data(update, context):
     context.user_data["mode"] = 0
     update.message.reply_text("Datos existentes limpios!")
 
-
 def drop_command(message, command):
     """
     Given a message text, drops the command prefix from the string.
     """
     return message[len(command) + 1:]
-
 
 # Initializacion del bot
 def main():
@@ -154,7 +173,7 @@ def main():
         Base.metadata.create_all(engine)
         print("connection DataBase sucessfully")
     except Exception:
-        print("Error in the conexion in the DB")
+        print("Error in the conexion to the DB")
     finally:
         logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
         # actualizaciones provenientes de telegram
@@ -171,7 +190,6 @@ def main():
         updater.start_polling()
         updater.idle()
     # Log stdout //nos ayudara a saber cuando y porque no funcionan las cosas
-
 
 if __name__ == '__main__':
     main()

@@ -7,14 +7,15 @@ import re
 
 MESSAGE_LIMIT = 4096
 
-def launch(lang, pipeout, on_close):
-    return Repl(lang, pipeout, on_close)
+def launch(lang, pipeout, on_close,id_question):
+    return Repl(lang, pipeout, on_close,id_question)
 
-def pipein(instance, text):
-    instance.pipein(text)
+def pipein(instance, text, message):
+    instance.pipein(text,message)
 
 def kill(instance):
     instance.kill()
+
 # metodo para limpiar mensajes de salida del REPL
 def cleanResponse(listas):
     for l in listas:
@@ -37,7 +38,7 @@ def validateError(lines):
     return validate
 
 class Repl:
-    def __init__(self, lang, pipeout, on_close):
+    def __init__(self, lang, pipeout, on_close,id_question):
         # Genera un contenedor con el intérprete para el idioma dado.
         # Devuelve una instancia del contenedor.
         # pipeout es una función que toma una cadena y la envía de vuelta al usuario.
@@ -45,7 +46,10 @@ class Repl:
         self.client = docker.APIClient()
         self.on_close = on_close
         self.lang = lang
-
+        self.text = ''
+        self.id_user = 0
+        self.id_message=0
+        self.id_question=id_question
         # Language seleccion
         if lang == "java":
             self.container = self.client.create_container(
@@ -63,11 +67,14 @@ class Repl:
         self.listener = threading.Thread(target = self.__listen, args = [pipeout])
         self.listener.start()
 
-    def pipein(self, text):
+    def pipein(self, text, message):
         # Envía la cadena de texto al contenedor como entrada estándar.
         # No devuelve nada.
+        self.id_message=message.id_message
+        self.id_user = message.fk_id_user
+        self.text=text
+        self.id_question+=1
         self.input.send(text.encode('utf-8')) # Convercion a bytes
-    
     # Parar un contenedor
     def kill(self):
         self.client.stop(self.container) # Elimino/Stop el contenedor
@@ -89,9 +96,13 @@ class Repl:
                 isError=validateError(lines)
                 out=cleanResponse(lines)
                 lines=[]
-                pipeout(out,isError)
+                pipeout(out,isError,self.text,self.id_user,self.id_message,self.id_question)
             else:
                 lines.append(decode_line)
         # Una vez que se alcanza este código, el contenedor está muerto
         self.on_close()
         self.client.remove_container(self.container) # elimino el container
+    # def setQuestion(self,question):
+    #     self.id_question=question
+    # def getQuestion(self):
+    #     return self.id_question
