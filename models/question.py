@@ -8,9 +8,9 @@ class Question(Base):
     text_question = Column(String(3000),nullable=False)
     # solucion?
 
-def getQuestion(number):
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    question = session.query(Question).filter(Question.id_question == number).first()
-    session.close()
-    return question
+    def getQuestion(number):
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        question = session.query(Question).filter(Question.id_question == number).first()
+        session.close()
+        return question

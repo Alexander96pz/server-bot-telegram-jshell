@@ -6,10 +6,10 @@ import re
 import os
 # BASE DE DATOS
 from config.bd import *
-from models.user import findUser,addUser
-from models.question import getQuestion
-from models.message import addMessage
-from models.answer import addAnswer,find_Answer
+from models.user import  User#findUser,addUser
+from models.question import Question#getQuestion
+from models.message import Message#addMessage
+from models.answer import Answer#addAnswer,find_Answer
 
 # from config.bd import engine,Base,Message
 
@@ -25,16 +25,16 @@ def start(update, context):
     # Añadir user 
     try:
         # find if user exists in the database
-        user=findUser(update._effective_user.id)
+        user=User.findUser(update._effective_user.id)
         # if the user no exists in the database
         if user is None:
             # add user
-            addUser(update)
+            User.addUser(update)
             # add message 
-            message=addMessage(update,update._effective_user.id)
+            message=Message.addMessage(update,update._effective_user.id)
         else:
             try:
-                message=addMessage(update,user.id_user)
+                message=Message.addMessage(update,user.id_user)
             except Exception as err:
                 print("message no add to the database: ",err)
     except Exception as err:   
@@ -75,7 +75,7 @@ def default(update, context):
     if "mode" in context.chat_data and context.chat_data["mode"] == 1:
         if "container" in context.chat_data:
             # reemplazar cadenas \t iniciales
-            message=addMessage(update,update._effective_user.id)
+            message=Message.addMessage(update,update._effective_user.id)
             raw_input = update.message.text
             indent = 0 #sangrìa
             while raw_input[:2] == "\\t":
@@ -106,11 +106,11 @@ def button(update, context):
             "java": "jshell (Java)"
         }[lang]
         # message.reply_text("Ahora iniciando " + shell + " interprete...")
-        answer=find_Answer(update._effective_user.id)
+        answer=Answer.find_Answer(update._effective_user.id)
         if answer is not None:
-            question=getQuestion(answer.id_question+1) 
+            question=Question.getQuestion(answer.id_question+1) 
         else:
-            question=getQuestion(1)
+            question=Question.getQuestion(1)
         # salida del interprete
         def pipeout(out,isError,text,id_user,id_message,id_question):
             # expresion regular
@@ -119,7 +119,7 @@ def button(update, context):
                 pass
             else:
                 try:
-                    addAnswer(id_question,id_message,id_user,isError)
+                    Answer.addAnswer(id_question,id_message,id_user,isError)
                 except Exception:
                     print("Error adding Answer")
                 finally:
@@ -127,7 +127,7 @@ def button(update, context):
                         # if re.match("\S", o):
                         message.reply_text(o)
                     if not isError:
-                        question=getQuestion(id_question+1)
+                        question=Question.getQuestion(id_question+1)
                         repl.next(context.chat_data["container"])
 
                         if question is not None:
