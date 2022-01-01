@@ -48,6 +48,7 @@ def mode(update, context):
     # args = drop_command(update.message.text, "/mode")
     # 1. REPL mode
     drop_data(update, context)
+
     context.chat_data["mode"] = 1
     options = [
             #                     nombre en el boton, value = "python"   
@@ -96,6 +97,9 @@ def default(update, context):
 # mode 1
 def button(update, context):
     # print("imprime el contexto.chat_data: ",context.chat_data)
+    # print(update.callback_query.data)
+    # if update.callback_query.data == "si":
+    #     print("Entra Proceso SI/NO")
     if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data:
         query = update.callback_query
         message = query.message
@@ -141,13 +145,17 @@ def button(update, context):
             context.chat_data.pop("container", None)
 
         if(question is None):
-            message.reply_text("Has finalizado el cuestionario correctamente")
+            message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?:")
+            # message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?:",reply_markup=InlineKeyboardMarkup.from_column(options))
         else:
             container = repl.launch(lang, pipeout, on_close,question.id_question)
             message.reply_text(question.text_question)
             context.chat_data["container"] = container  
-    # else:
-    #     print("Esto imprime",context.chat_data["mode"])  # debug statement
+    
+    # if update.callback_query.data == "si":
+    #     print("Entra Proceso SI/NO")
+        
+    # print("Esto imprime",context.chat_data["mode"])  # debug statement
 
 # mezcla de funciones
 def drop_data(update, context):
