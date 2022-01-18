@@ -6,12 +6,10 @@ import re
 import os
 # BASE DE DATOS
 from config.bd import *
-from models.user import  User#findUser,addUser
-from models.question import Question#getQuestion
-from models.message import Message#addMessage
-from models.answer import Answer#addAnswer,find_Answer
-
-# from config.bd import engine,Base,Message
+from models.user import  User
+from models.question import Question
+from models.message import Message
+from models.answer import Answer
 
 from api_key import API_KEY
 import repl
@@ -48,14 +46,26 @@ def mode(update, context):
     # args = drop_command(update.message.text, "/mode")
     # 1. REPL mode
     drop_data(update, context)
-
-    context.chat_data["mode"] = 1
     options = [
-            #                     nombre en el boton, value = "python"   
-            # InlineKeyboardButton("python (Python)", callback_data="python"),
-            InlineKeyboardButton("jshell (Java)", callback_data="java"),
-            ]
-    update.message.reply_text("Por favor seleccione el tipo de interprete:",reply_markup=InlineKeyboardMarkup.from_column(options))
+                #                     nombre en el boton, value = "python"   
+                # InlineKeyboardButton("python (Python)", callback_data="python"),
+                InlineKeyboardButton("jshell (Java)", callback_data="java"),
+                ]
+    answer=Answer.find_Answer(update._effective_user.id)
+    if answer is None:
+        context.chat_data["mode"] = 1
+        update.message.reply_text("Por favor seleccione el tipo de interprete:",reply_markup=InlineKeyboardMarkup.from_column(options))
+    else:    
+        question=Question.getQuestion(answer.id_question+1)
+        if question is None:
+            options = [
+                    InlineKeyboardButton("SI", callback_data="si"),
+                    InlineKeyboardButton("NO", callback_data="no"),
+                    ]
+            update.message.reply_text("Ya has finalizado el cuestionario correctamente, deseas repetir?:",reply_markup=InlineKeyboardMarkup.from_column(options))
+        else:
+            context.chat_data["mode"] = 1
+            update.message.reply_text("Por favor seleccione el tipo de interprete:",reply_markup=InlineKeyboardMarkup.from_column(options))
     
 def exit(update, context):
     # Elimina cualquier instancia de contenedor que se esté ejecutando actualmente
@@ -64,7 +74,7 @@ def exit(update, context):
             repl.kill(context.chat_data["container"])
         # if context.chat_data["mode"] == 2:
         #     batch.kill(context.chat_data["container"])
-        update.message.reply_text("Contenedor Finalizado")
+        update.message.reply_text("Entorno Finalizado")
     else:
         update.message.reply_text("Error: Interpreter not started or already terminated")
 
@@ -76,18 +86,14 @@ def default(update, context):
     if "mode" in context.chat_data and context.chat_data["mode"] == 1:
         if "container" in context.chat_data:
             # reemplazar cadenas \t iniciales
-            message=Message.addMessage(update,update._effective_user.id)
-            raw_input = update.message.text
-            indent = 0 #sangrìa
-            while raw_input[:2] == "\\t":
-                indent += 1
-                raw_input = raw_input[2:]
-                print(raw_input + " While")
-            # literal \n string sent - send blank line
-            if raw_input == "\\n":
-                raw_input = ""
-            stdin = indent * "\t" + raw_input
-            repl.pipein(context.chat_data["container"], stdin + "\n",message)
+            if update.edited_message:
+                message=Message.updateMessage(update.edited_message)
+                raw_input = update.edited_message.text
+            else:
+                message=Message.addMessage(update,update._effective_user.id)
+                raw_input = update.message.text
+            stdin = raw_input.strip().replace('\n',"")
+            repl.pipein(context.chat_data["container"], stdin + "\n", message)
         else:
             update.message.reply_text("Error: Intérprete no iniciada o aun finalizada")
     else:
@@ -98,83 +104,91 @@ def default(update, context):
 def button(update, context):
     # print("imprime el contexto.chat_data: ",context.chat_data)
     # print(update.callback_query.data)
-    # if update.callback_query.data == "si":
+    if update.callback_query.data == "no":
+        update.callback_query.message.edit_reply_markup()
+        update.callback_query.message.reply_text("Nunca dejes de aprender. Sigue Formandote /mode")
     #     print("Entra Proceso SI/NO")
-    if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data:
-        query = update.callback_query
-        message = query.message
-        lang = query.data
-        message.edit_reply_markup()  # remueve los botones
-        shell = {
-            # "python": "python (Python)",
-            "java": "jshell (Java)"
-        }[lang]
-        # message.reply_text("Ahora iniciando " + shell + " interprete...")
-        answer=Answer.find_Answer(update._effective_user.id)
-        if answer is not None:
-            question=Question.getQuestion(answer.id_question+1) 
-        else:
-            question=Question.getQuestion(1)
-        # salida del interprete
-        def pipeout(out,isError,text,id_user,id_message,id_question):
-            # expresion regular
-            # si la lista esta vacia?
-            if not out:
-                pass
+    else:
+        if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data or update.callback_query.data == "si":
+            query = update.callback_query
+            message = query.message
+            lang = ''
+            if update.callback_query.data == "si":
+                # else:
+                question=Question.getQuestion(1)
+                lang="java"
+                context.chat_data["mode"] = 1
             else:
-                try:
-                    Answer.addAnswer(id_question,id_message,id_user,isError)
-                except Exception:
-                    print("Error adding Answer")
-                finally:
-                    for o in out:
-                        # if re.match("\S", o):
-                        message.reply_text(o)
-                    if not isError:
-                        question=Question.getQuestion(id_question+1)
-                        repl.next(context.chat_data["container"])
+                answer=Answer.find_Answer(update._effective_user.id)
+                if answer is None:
+                    question=Question.getQuestion(1)
+                else: 
+                    question=Question.getQuestion(answer.id_question+1) 
+                lang = query.data
+            message.edit_reply_markup()  # remueve los botones
+            shell = {
+                "java": "jshell (Java)"
+            }[lang]
 
-                        if question is not None:
-                            message.reply_text(question.text_question)
-                        else:
-                            message.reply_text("Felicidades! terminaste con exito")
-                            
-                # controlamos que la cadena no contengan espacios en blanco para reenviar texto
-        # elimina del item chat_data la identificacion contenedor
-        def on_close():
-            context.chat_data.pop("container", None)
+            # salida del interprete
+            def pipeout(out,isError,text,id_user,id_message,id_question):
+                # expresion regular
+                # si la lista esta vacia?
+                if not out:
+                    pass
+                else:
+                    try:
+                        Answer.addAnswer(id_question,id_message,id_user,isError)
+                    except Exception  as err:
+                        print("Error adding Answer",err)
+                    finally:
+                        for o in out:
+                            # if re.match("\S", o):
+                            message.reply_text(o)
+                        if not isError:
+                            question=Question.getQuestion(id_question+1)
+                            repl.next(context.chat_data["container"])
 
-        if(question is None):
-            message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?:")
-            # message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?:",reply_markup=InlineKeyboardMarkup.from_column(options))
-        else:
-            container = repl.launch(lang, pipeout, on_close,question.id_question)
-            message.reply_text(question.text_question)
-            context.chat_data["container"] = container  
-    
-    # if update.callback_query.data == "si":
-    #     print("Entra Proceso SI/NO")
-        
-    # print("Esto imprime",context.chat_data["mode"])  # debug statement
+                            if question is not None:
+                                message.reply_text(question.text_question)
+                            else:
+                                repl.kill(context.chat_data["container"])
+                                options = [
+                                    InlineKeyboardButton("SI", callback_data="si"),
+                                    InlineKeyboardButton("NO", callback_data="no"),
+                                ]
+                                message.reply_text("Felicidades! terminaste con exito, deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
+                                
+                    # controlamos que la cadena no contengan espacios en blanco para reenviar texto
+            # elimina del item chat_data la identificacion contenedor
+            def on_close():
+                context.chat_data.pop("container", None)
+
+            if(question is None):
+                options = [
+                                    InlineKeyboardButton("SI", callback_data="si"),
+                                    InlineKeyboardButton("NO", callback_data="no"),
+                                ]
+                message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
+                # message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?:",reply_markup=InlineKeyboardMarkup.from_column(options))
+            else:
+                container = repl.launch(lang, pipeout, on_close,question.id_question)
+                message.reply_text(question.text_question)
+                context.chat_data["container"] = container  
 
 # mezcla de funciones
 def drop_data(update, context):
     # Limpia todos los chatdatas y resetea los stados del bot.
     if "container" in context.chat_data:
         repl.kill(context.chat_data["container"])
-    # chat_id = str(update.effective_chat.id)
-    # for ext in KNOWN_FILE_TYPES:
-    #     path = "user_files/" + chat_id + ext
-    #     if os.path.exists(path):
-    #         os.remove(path)
     context.user_data["mode"] = 0
-    update.message.reply_text("Datos existentes limpios!")
+    # update.message.reply_text("Datos existentes limpios!")
 
-def drop_command(message, command):
-    """
-    Given a message text, drops the command prefix from the string.
-    """
-    return message[len(command) + 1:]
+# def drop_command(message, command):
+#     """
+#     Given a message text, drops the command prefix from the string.
+#     """
+#     return message[len(command) + 1:]
 
 # Initializacion del bot
 def main():

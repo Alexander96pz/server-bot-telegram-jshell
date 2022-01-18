@@ -19,11 +19,29 @@ def kill(instance):
 def next(instance):
     instance.NextQuestion()
 # metodo para limpiar mensajes de salida del REPL
-def cleanResponse(listas):
+def cleanResponse(text,listas):
+    lista2=[]  # lista auxiliar
+    if(text[-2:].find(";")== 0):
+        text=text[:-2]
+        for l in listas:
+            if(l.find(text) != -1):
+                lista2.append(l.replace(text,""))
+            else:
+                lista2.append(l)
+        listas=lista2
+    else:
+        for l in listas:
+            if(l.find(text[:-1]) != -1):
+                lista2.append(l.replace(text[:-1],""))
+            else:
+                lista2.append(l)
+        listas=lista2
     for l in listas:
         # Eliminamos los mensajes iniciales del REPL
         if l.find("Welcome to JShell") != -1:
             listas = []
+            return listas
+            
     return listas
 
 def validateError(lines):
@@ -95,10 +113,8 @@ class Repl:
             # si la linea esta vacia
             if len(decode_line) == 1:
                 isError=validateError(lines)
-                out=cleanResponse(lines)
+                out=cleanResponse(self.text,lines)
                 lines=[]
-                # if isError:
-                #     self.id_question +=1
                 pipeout(out,isError,self.text,self.id_user,self.id_message,self.id_question)
             else:
                 lines.append(decode_line)

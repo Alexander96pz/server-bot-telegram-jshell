@@ -1,4 +1,4 @@
-from sqlalchemy import Column,ForeignKey,Boolean
+from sqlalchemy import Column,ForeignKey,Boolean,Integer
 from sqlalchemy.orm import sessionmaker
 from config.bd import Base,engine
 from models.message import Message
@@ -6,9 +6,10 @@ from sqlalchemy import desc
 
 class Answer(Base):
     __tablename__= 'answer'
-    id_question = Column(ForeignKey("question.id_question"),primary_key=True)
-    id_message = Column(ForeignKey("message.id_message"),primary_key=True)
-    id_user = Column(ForeignKey("user.id_user"),primary_key=True)
+    id_answer = Column(Integer,primary_key=True,unique=True,autoincrement=True)
+    id_question = Column(ForeignKey("question.id_question"))
+    id_message = Column(ForeignKey("message.id_message"))
+    id_user = Column(ForeignKey("user.id_user"))
     # nos permitira conocer si la respuesta es correcta o no
     isError= Column(Boolean,nullable=False)
 
