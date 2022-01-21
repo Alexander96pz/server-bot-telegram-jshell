@@ -41,7 +41,6 @@ def cleanResponse(text,listas):
         if l.find("Welcome to JShell") != -1:
             listas = []
             return listas
-            
     return listas
 
 def validateError(lines):
@@ -124,8 +123,3 @@ class Repl:
     
     def NextQuestion(self):
         self.id_question+=1
-
-    # def setQuestion(self,question):
-    #     self.id_question=question
-    # def getQuestion(self):
-    #     return self.id_question
