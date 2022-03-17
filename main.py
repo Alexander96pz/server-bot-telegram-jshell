@@ -81,8 +81,10 @@ def exit(update, context):
 # Message handlers
 
 def default(update, context):
+    print(context)
     # Llamado en cualquier mensaje de texto que no sea de orden
     #  En el modo 1, canaliza el mensaje al contenedor si existe.
+    print(update)
     if "mode" in context.chat_data and context.chat_data["mode"] == 1:
         if "container" in context.chat_data:
             # reemplazar cadenas \t iniciales
@@ -93,6 +95,7 @@ def default(update, context):
                 message=Message.addMessage(update,update._effective_user.id)
                 raw_input = update.message.text
             stdin = raw_input.strip().replace('\n',"")
+            print(context.chat_data["container"])
             repl.pipein(context.chat_data["container"], stdin + "\n", message)
         else:
             update.message.reply_text("Error: Entorno no iniciada")
