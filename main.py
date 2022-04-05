@@ -81,10 +81,8 @@ def exit(update, context):
 # Message handlers
 
 def default(update, context):
-    print(context)
     # Llamado en cualquier mensaje de texto que no sea de orden
     #  En el modo 1, canaliza el mensaje al contenedor si existe.
-    print(update)
     if "mode" in context.chat_data and context.chat_data["mode"] == 1:
         if "container" in context.chat_data:
             # reemplazar cadenas \t iniciales
@@ -95,7 +93,6 @@ def default(update, context):
                 message=Message.addMessage(update,update._effective_user.id)
                 raw_input = update.message.text
             stdin = raw_input.strip().replace('\n',"")
-            print(context.chat_data["container"])
             repl.pipein(context.chat_data["container"], stdin + "\n", message)
         else:
             update.message.reply_text("Error: Entorno no iniciada")
@@ -133,23 +130,20 @@ def button(update, context):
             }[lang]
 
             # salida del interprete
-            def pipeout(out,isError,text,id_user,id_message,id_question):
-                if isError:
-                    color="red"
-                else:
-                    color="green"
+            def pipeout(out,isError,text,id_user,id_message,id_question,analisis):
                 # si la lista esta vacia?
                 if not out:
                     pass
                 else:
                     try:
-                        Answer.addAnswer(id_question,id_message,id_user,isError)
+                        Answer.addAnswer(id_question,id_message,id_user,isError,"".join(out))
                     except Exception  as err:
                         print("Error adding Answer",err)
                     finally:
                         for o in out:
                             message.reply_text("<code>"+o+"</code>",parse_mode=ParseMode.HTML)
-                        if not isError:
+                        if not isError and analisis["status"] != 'REJECTED':
+                        # if not isError:
                             question=Question.getQuestion(id_question+1)
                             repl.next(context.chat_data["container"])
                             if question is not None:
@@ -162,9 +156,9 @@ def button(update, context):
                                     InlineKeyboardButton("SI", callback_data="si"),
                                     InlineKeyboardButton("NO", callback_data="no"),
                                 ]
-                                message.reply_text("Felicidades! terminaste con exito, deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
+                                message.reply_text("FELICIDADES! terminaste con exito, deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
                         else:
-                            message.reply_text("<b>Intentalo de nuevo amigo</b>",parse_mode=ParseMode.HTML)        
+                            message.reply_text("<b>INCORRECTO!, Intentalo de nuevo amigo</b>",parse_mode=ParseMode.HTML)        
                     # controlamos que la cadena no contengan espacios en blanco para reenviar texto
             # elimina del item chat_data la identificacion contenedor
             def on_close():

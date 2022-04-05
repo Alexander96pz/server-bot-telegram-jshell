@@ -4,6 +4,8 @@ import time
 import threading
 import registry_credentials
 import re
+import service.codeStatic as ca
+import json
 
 MESSAGE_LIMIT = 4096
 
@@ -114,7 +116,10 @@ class Repl:
                 isError=validateError(lines)
                 out=cleanResponse(self.text,lines)
                 lines=[]
-                pipeout(out,isError,self.text,self.id_user,self.id_message,self.id_question)
+                responseAnalyst=ca.postAnalysis(self.id_question,self.text)
+                if responseAnalyst:
+                    responseAnalyst=json.loads(responseAnalyst)
+                pipeout(out,isError,self.text,self.id_user,self.id_message,self.id_question,responseAnalyst)
             else:
                 lines.append(decode_line)
         # Una vez que se alcanza este código, el contenedor está muerto

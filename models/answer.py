@@ -1,4 +1,4 @@
-from sqlalchemy import Column,ForeignKey,Boolean,Integer
+from sqlalchemy import Column,ForeignKey,Boolean,Integer,String
 from sqlalchemy.orm import sessionmaker
 from config.bd import Base,engine
 from models.message import Message
@@ -12,9 +12,10 @@ class Answer(Base):
     id_user = Column(ForeignKey("user.id_user"))
     # nos permitira conocer si la respuesta es correcta o no
     isError= Column(Boolean,nullable=False)
+    text_answer=Column(String(400),nullable=True)
 
+    # me extrae la ultima respuesta respondida correctamente
     def find_Answer(id_user):
-        # me extrae la ultima respuesta respondida correctamente
         Session = sessionmaker(bind=engine)
         session = Session()
         answer = session.query(Answer).join(Message
@@ -25,13 +26,14 @@ class Answer(Base):
         session.close()
         return answer
 
-    def addAnswer(id_question,id_message,id_user,isError):
+    def addAnswer(id_question,id_message,id_user,isError,text_answer):
         Session = sessionmaker(bind=engine)
         session = Session()
         answer = Answer(id_question=id_question,
-                id_message=id_message,
-                id_user=id_user,
-                isError=isError)
+                        id_message=id_message,
+                        id_user=id_user,
+                        isError=isError,
+                        text_answer=text_answer)
         session.add(answer)
         session.commit()
         session.close()

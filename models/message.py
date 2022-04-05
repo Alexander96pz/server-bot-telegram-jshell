@@ -20,7 +20,7 @@ class Message(Base):
         session.close()
         return message
     def updateMessage(edited_message):
-        Session= sessionmaker(bind=engine)
+        # Session= sessionmaker(bind=engine)
         session = Session()
         message = session.query(Message).filter(Message.id_message==edited_message.message_id).update({
             # Message.date:datetime.datetime.utcnow,
