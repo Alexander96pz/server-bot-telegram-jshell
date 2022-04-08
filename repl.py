@@ -1,16 +1,16 @@
 from re import L
 import docker
-import time
+# import time
 import threading
-import registry_credentials
-import re
+# import registry_credentials
+# import re
 import service.codeStatic as ca
 import json
 
 MESSAGE_LIMIT = 4096
 
-def launch(lang, pipeout, on_close,id_question):
-    return Repl(lang, pipeout, on_close,id_question)
+def launch(lang, pipeout, on_close,id_question,nro_tried):
+    return Repl(lang, pipeout, on_close,id_question,nro_tried)
 
 def pipein(instance, text, message):
     instance.pipein(text,message)
@@ -20,6 +20,12 @@ def kill(instance):
 
 def next(instance):
     instance.NextQuestion()
+
+def next_tried(instance):
+    instance.setTried()
+def get_tried(instance):
+    return instance.getTried()
+
 # metodo para limpiar mensajes de salida del REPL
 def cleanResponse(text,listas):
     lista2=[]  # lista auxiliar
@@ -59,7 +65,7 @@ def validateError(lines):
     return validate
 
 class Repl:
-    def __init__(self, lang, pipeout, on_close,id_question):
+    def __init__(self, lang, pipeout, on_close,id_question,nro_tried):
         # Genera un contenedor con el intérprete para el idioma dado.
         # Devuelve una instancia del contenedor.
         # pipeout es una función que toma una cadena y la envía de vuelta al usuario.
@@ -71,6 +77,7 @@ class Repl:
         self.id_user = 0
         self.id_message=0
         self.id_question=id_question
+        self.nro_tried = nro_tried
         # Language seleccion
         if lang == "java":
             self.container = self.client.create_container(
@@ -111,6 +118,7 @@ class Repl:
         for line in logs:
             # transformo de bytes a string
             decode_line=line.decode('utf-8')
+            
             # si la linea esta vacia
             if len(decode_line) == 1:
                 isError=validateError(lines)
@@ -119,7 +127,9 @@ class Repl:
                 responseAnalyst=ca.postAnalysis(self.id_question,self.text)
                 if responseAnalyst:
                     responseAnalyst=json.loads(responseAnalyst)
-                pipeout(out,isError,self.text,self.id_user,self.id_message,self.id_question,responseAnalyst)
+                    if ( 'REJECTED' == responseAnalyst["status"]):
+                        isError=True
+                pipeout(out,isError,self.id_user,self.id_message,self.id_question,responseAnalyst,self.nro_tried)
             else:
                 lines.append(decode_line)
         # Una vez que se alcanza este código, el contenedor está muerto
@@ -128,3 +138,9 @@ class Repl:
     
     def NextQuestion(self):
         self.id_question+=1
+
+    def setTried(self):
+        self.nro_tried+=1
+
+    def getTried(self):
+        return self.nro_tried

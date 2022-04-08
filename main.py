@@ -1,9 +1,10 @@
+from traceback import print_tb
 from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode
 from telegram.ext import *
 import logging
 import sys
-import re
-import os
+# import re
+# import os
 # BASE DE DATOS
 from config.bd import *
 from models.user import  User
@@ -29,16 +30,15 @@ def start(update, context):
             # add user
             User.addUser(update)
             # add message 
-            message=Message.addMessage(update,update._effective_user.id)
+            Message.addMessage(update,update._effective_user.id)
         else:
             try:
-                message=Message.addMessage(update,user.id_user)
+                Message.addMessage(update,user.id_user)
             except Exception as err:
                 print("message no add to the database: ",err)
     except Exception as err:   
         print("error add user in the database!: ",err)
     update.message.reply_text("Hola que tal!")
-    # update.message.reply_text("<b> Hola que tal! </b>",parse_mode=ParseMode.HTML)
     update.message.reply_text("Este es un espació dedicado para poner en practica tus habilidades de programacion")
     update.message.reply_text("Para iniciar, por favor usa /mode.")
 
@@ -47,8 +47,7 @@ def mode(update, context):
     # args = drop_command(update.message.text, "/mode")
     # 1. REPL mode
     drop_data(update, context)
-    options = [
-                #                     nombre en el boton, value = "python"   
+    options = [#                     nombre en el boton, value = "python"   
                 InlineKeyboardButton("Iniciar entono jshell (Java)", callback_data="java"),
                 ]
     answer=Answer.find_Answer(update._effective_user.id)
@@ -102,41 +101,48 @@ def default(update, context):
 # Callback handlers //seleccion del interprete button
 # mode 1
 def button(update, context):
-    # print("imprime el contexto.chat_data: ",context.chat_data)
-    # print(update.callback_query.data)
+    # Si el usuario no desea repetir el cuestionario de preguntas
     if update.callback_query.data == "no":
         update.callback_query.message.edit_reply_markup()
         update.callback_query.message.reply_text("Nunca dejes de aprender. Sigue Formandote /mode")
     else:
+        # Cuando el usuario si desea repetir el cuestionario
+        # Cuando 
         if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data or update.callback_query.data == "si":
             query = update.callback_query
             message = query.message
-            lang = ''
+            lang = "java"
+            nro_tried=0
+            question=0
             if update.callback_query.data == "si":
-                # else:
                 question=Question.getQuestion(1)
-                lang="java"
                 context.chat_data["mode"] = 1
+                answer=Answer.find_Answer(update._effective_user.id)
+                nro_tried=answer.tried+1
+                # obtener el numero de intentos actuales
             else:
                 answer=Answer.find_Answer(update._effective_user.id)
+                # Permite verificar si es o no la primera interaccion en modo entorno
                 if answer is None:
                     question=Question.getQuestion(1)
-                else: 
-                    question=Question.getQuestion(answer.id_question+1) 
-                lang = query.data
+                    nro_tried=1
+                else:
+                    nro_tried=answer.tried
+                    question=Question.getQuestion(answer.id_question+1)
+                # lang = query.data
             message.edit_reply_markup()  # remueve los botones
-            shell = {
-                "java": "jshell (Java)"
-            }[lang]
+            # shell = {
+            #     "java": "jshell (Java)"
+            # }[lang]
 
             # salida del interprete
-            def pipeout(out,isError,text,id_user,id_message,id_question,analisis):
+            def pipeout(out,isError,id_user,id_message,id_question,analisis,nro_tried):
                 # si la lista esta vacia?
                 if not out:
                     pass
                 else:
                     try:
-                        Answer.addAnswer(id_question,id_message,id_user,isError,"".join(out))
+                        Answer.addAnswer(id_question,id_message,id_user,isError,"".join(out),nro_tried)
                     except Exception  as err:
                         print("Error adding Answer",err)
                     finally:
@@ -146,16 +152,20 @@ def button(update, context):
                         # if not isError:
                             question=Question.getQuestion(id_question+1)
                             repl.next(context.chat_data["container"])
+                            
                             if question is not None:
                                 q="<b>"+question.text_question+"</b>"
                                 message.reply_text(q,parse_mode=ParseMode.HTML)
                                 # message.reply_text(question.text_question)
                             else:
+                                # nro_tried=repl.get_tried(context.chat_data["container"])
+                                # print("Cuando termina todas las preguntas",nro_tried)
                                 repl.kill(context.chat_data["container"])
                                 options = [
                                     InlineKeyboardButton("SI", callback_data="si"),
                                     InlineKeyboardButton("NO", callback_data="no"),
                                 ]
+                            
                                 message.reply_text("FELICIDADES! terminaste con exito, deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
                         else:
                             message.reply_text("<b>INCORRECTO!, Intentalo de nuevo amigo</b>",parse_mode=ParseMode.HTML)        
@@ -166,17 +176,16 @@ def button(update, context):
 
             if(question is None):
                 options = [
-                                    InlineKeyboardButton("SI", callback_data="si"),
-                                    InlineKeyboardButton("NO", callback_data="no"),
-                                ]
+                            InlineKeyboardButton("SI", callback_data="si"),
+                            InlineKeyboardButton("NO", callback_data="no"),
+                            ]
                 message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
                 # message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?:",reply_markup=InlineKeyboardMarkup.from_column(options))
             else:
-                container = repl.launch(lang, pipeout, on_close,question.id_question)
+                container = repl.launch(lang, pipeout, on_close,question.id_question,nro_tried)
                 q="<b>"+question.text_question+"</b>"
                 message.reply_text(q,parse_mode=ParseMode.HTML)
-                # update.message.reply_text("<b> Hola que tal! </b>",parse_mode=ParseMode.HTML)
-                context.chat_data["container"] = container  
+                context.chat_data["container"] = container
 
 # mezcla de funciones
 def drop_data(update, context):

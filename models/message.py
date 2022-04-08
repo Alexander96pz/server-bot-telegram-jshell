@@ -7,7 +7,7 @@ Session = sessionmaker(bind=engine)
 class Message(Base):
     __tablename__ = 'message'
     id_message = Column(Integer,primary_key=True,unique=True)
-    date = Column(DateTime,default=datetime.datetime.utcnow)
+    date = Column(DateTime,default=datetime.datetime.now())
     text= Column(String(1000),nullable=False)
     fk_id_user=Column(Integer,ForeignKey('user.id_user'))
 

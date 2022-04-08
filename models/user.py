@@ -1,4 +1,5 @@
-from sqlalchemy import Column,Integer,String,Boolean
+from sqlalchemy import Column,Integer,String,Boolean,DateTime
+import datetime
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 from config.bd import Base,engine
@@ -10,6 +11,7 @@ class User(Base):
     is_bot = Column(Boolean, nullable=True)
     username = Column(String(50),nullable=False)
     lenguaje_code = Column(String(50),nullable=True)
+    createdAt = Column(DateTime,default=datetime.datetime.now())
     id_message = relationship("Message")
 
     def addUser(update):
