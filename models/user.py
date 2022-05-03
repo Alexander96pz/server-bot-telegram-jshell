@@ -10,7 +10,7 @@ class User(Base):
     first_name = Column(String(50),nullable=False)
     is_bot = Column(Boolean, nullable=True)
     username = Column(String(50),nullable=False)
-    lenguaje_code = Column(String(50),nullable=True)
+    lenguaje_code = Column(String(10),nullable=True)
     createdAt = Column(DateTime,default=datetime.datetime.now())
     id_message = relationship("Message")
 

@@ -1,14 +1,15 @@
-
+import os
 import requests
 import json
+import socket
 # Making a POST request
 def postAnalysis(id_question,code):
-    if (len(code) > 0):    
+    if (len(code) > 0):
         try:
-            r = requests.post('http://localhost:8080/script', json={'id': id_question,'code': code})
+            r = requests.post('http://'+os.getenv("STATIC_KEY")+':8080/script', json={'id': id_question,'code': code})
             # success code - 200
             if(r.status_code == 200):
-            # print content of request
+                # print content of request
                 return json.dumps(r.json())
         except Exception:
             print("Error envio analisis estatico")   

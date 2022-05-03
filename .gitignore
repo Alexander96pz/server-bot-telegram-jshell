@@ -2,3 +2,4 @@
 /.idea
 models/__pycache__/
 config/__pycache__/
+.env
