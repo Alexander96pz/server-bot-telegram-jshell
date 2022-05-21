@@ -1,7 +1,6 @@
 import os
 import requests
 import json
-import socket
 # Making a POST request
 def postAnalysis(id_question,code):
     if (len(code) > 0):

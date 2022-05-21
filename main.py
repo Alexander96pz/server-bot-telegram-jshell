@@ -111,16 +111,13 @@ def button(update, context):
     # Si el usuario no desea repetir el cuestionario de preguntas
     if update.callback_query.data == "no":
         update.callback_query.message.edit_reply_markup()
-        update.callback_query.message.reply_text("Nunca dejes de aprender. Sigue Formandote /mode")
+        update.callback_query.message.reply_text("Espero que regreses, nunca dejes de aprender. Recuerda /mode para iniciar el entorno")
     else:
         # Cuando el usuario si desea repetir el cuestionario de preguntas
-        # Cuando 
         if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data or update.callback_query.data == "si":
             query = update.callback_query
             message = query.message
             lang = "java"
-            nro_tried=0
-            question=0
             # Si selecciona de la opcion SI, de repetir el cuestionario
             if update.callback_query.data == "si":
                 question=Question.getQuestion(1)
@@ -137,61 +134,55 @@ def button(update, context):
                 else:
                     nro_tried=answer.tried
                     question=Question.getQuestion(answer.id_question+1)
-                # lang = query.data
             message.edit_reply_markup()  # remueve los botones
-            # shell = {
-            #     "java": "jshell (Java)"
-            # }[lang]
 
             # salida del interprete
-            def pipeout(out,isError,id_user,id_message,id_question,analisis,nro_tried):
+            def pipeout(out,analisisDinamico,id_user,id_message,id_question,analisisStatic,nro_tried):
                 # si la lista esta vacia?
                 if not out:
                     pass
                 else:
                     try:
-                        Answer.addAnswer(id_question,id_message,id_user,isError,"".join(out),nro_tried)
+                        Answer.addAnswer(id_question,id_message,id_user,analisisDinamico,"".join(out),nro_tried)
                     except Exception  as err:
                         print("Error adding Answer",err)
                     finally:
                         for o in out:
                             message.reply_text("<code>"+o+"</code>",parse_mode=ParseMode.HTML)
-                        if not isError and analisis["status"] != 'REJECTED':
-                            message.reply_text("<b>Correcto!, bien echo</b>",parse_mode=ParseMode.HTML)
-                        # if not isError:
+                        if not analisisDinamico and not analisisStatic:
+                            message.reply_text("<b>Correcto! bien echo</b>",parse_mode=ParseMode.HTML)
                             question=Question.getQuestion(id_question+1)
                             repl.next(context.chat_data["container"])
-                            
                             if question is not None:
-                                q="<b>"+question.text_question+"</b>"
+                                q="<b>RESUELVE: "+question.text_question+"</b>"
                                 message.reply_text(q,parse_mode=ParseMode.HTML)
-                                # message.reply_text(question.text_question)
                             else:
-                                # nro_tried=repl.get_tried(context.chat_data["container"])
-                                # print("Cuando termina todas las preguntas",nro_tried)
                                 repl.kill(context.chat_data["container"])
                                 options = [
                                     InlineKeyboardButton("SI", callback_data="si"),
                                     InlineKeyboardButton("NO", callback_data="no"),
                                 ]
-                            
-                                message.reply_text("FELICIDADES! terminaste con exito, deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
+                                message.reply_text("FELICIDADES! terminaste con exito. Deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
                         else:
-                            message.reply_text("<b>INCORRECTO!, Intentalo de nuevo amigo</b>",parse_mode=ParseMode.HTML)        
+                            if analisisDinamico:
+                                message.reply_text("<b>Error en la sintaxis! intentalo de nuevo amigo</b>",parse_mode=ParseMode.HTML)  
+                            else:      
+                                message.reply_text("<b>No hay errores de sintaxis, pero la solución es incorrecta</b>",parse_mode=ParseMode.HTML)  
                     # controlamos que la cadena no contengan espacios en blanco para reenviar texto
             # elimina del item chat_data la identificacion contenedor
             def on_close():
                 context.chat_data.pop("container", None)
             # Si has respondido todas las preguntas
             if(question is None):
+
                 options = [
                             InlineKeyboardButton("SI", callback_data="si"),
                             InlineKeyboardButton("NO", callback_data="no"),
                             ]
-                message.reply_text("Has finalizado el cuestionario correctamente, deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
+                message.reply_text("Has finalizado el cuestionario correctamente. Deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
             else:
                 container = repl.launch(lang, pipeout, on_close,question.id_question,nro_tried)
-                message.reply_text("<b>"+question.text_question+"</b>",parse_mode=ParseMode.HTML)
+                message.reply_text("<b>RESUELVE: "+question.text_question+"</b>",parse_mode=ParseMode.HTML)
                 context.chat_data["container"] = container
 
 # mezcla de funciones
@@ -227,6 +218,5 @@ def main():
         #Comienza a sondear las actualizaciones de telegram 
         updater.start_polling()
         updater.idle()
-
 if __name__ == '__main__':
     main()

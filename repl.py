@@ -50,19 +50,22 @@ def cleanResponse(text,listas):
             listas = []
             return listas
     return listas
-
+# Interpretacion de Resultados / Analisis Dinamico
 def validateError(lines):
-    validate=False
     validate1=False
     validate2=False
-    for l in lines:
-        if l.find("Error:") != -1:
-            validate1=True
-        if l.find("^") != -1:
-            validate2=True
-    if validate1 == True and validate2 == True:
-        validate=True
-    return validate
+    if len(lines) == 0:
+        return True
+    else:    
+        for l in lines:
+            if l.find("Error:") != -1:
+                validate1=True
+            if l.find("^") != -1:
+                validate2=True
+        if validate1 == True and validate2 == True:
+            return True
+        else:
+            return False
 
 class Repl:
     def __init__(self, lang, pipeout, on_close,id_question,nro_tried):
@@ -121,15 +124,18 @@ class Repl:
             
             # si la linea esta vacia
             if len(decode_line) == 1:
-                isError=validateError(lines)
                 out=cleanResponse(self.text,lines)
-                lines=[]
-                responseAnalyst=ca.postAnalysis(self.id_question,self.text)
-                if responseAnalyst:
-                    responseAnalyst=json.loads(responseAnalyst)
-                    if ( 'REJECTED' == responseAnalyst["status"]):
-                        isError=True
-                pipeout(out,isError,self.id_user,self.id_message,self.id_question,responseAnalyst,self.nro_tried)
+                isError=validateError(out)
+                feedback=False
+                # si no hay erroresen el analisis dinamico
+                if not isError:
+                    responseAnalyst=ca.postAnalysis(self.id_question,self.text)
+                    if responseAnalyst:
+                        responseAnalyst=json.loads(responseAnalyst)
+                        if ( 'REJECTED' == responseAnalyst["status"]):
+                            feedback=True
+                lines=[] 
+                pipeout(out,isError,self.id_user,self.id_message,self.id_question,feedback,self.nro_tried)
             else:
                 lines.append(decode_line)
         # Una vez que se alcanza este código, el contenedor está muerto
