@@ -1,11 +1,9 @@
-from re import L
 import docker
-# import time
 import threading
-# import registry_credentials
-# import re
 import service.codeStatic as ca
 import json
+from models.answer import Answer
+import logging
 
 MESSAGE_LIMIT = 4096
 
@@ -50,6 +48,7 @@ def cleanResponse(text,listas):
             listas = []
             return listas
     return listas
+
 # Interpretacion de Resultados / Analisis Dinamico
 def validateError(lines):
     validate1=False
@@ -121,21 +120,29 @@ class Repl:
         for line in logs:
             # transformo de bytes a string
             decode_line=line.decode('utf-8')
-            
             # si la linea esta vacia
             if len(decode_line) == 1:
-                out=cleanResponse(self.text,lines)
-                isError=validateError(out)
-                feedback=False
-                # si no hay erroresen el analisis dinamico
-                if not isError:
-                    responseAnalyst=ca.postAnalysis(self.id_question,self.text)
-                    if responseAnalyst:
-                        responseAnalyst=json.loads(responseAnalyst)
-                        if ( 'REJECTED' == responseAnalyst["status"]):
-                            feedback=True
-                lines=[] 
-                pipeout(out,isError,self.id_user,self.id_message,self.id_question,feedback,self.nro_tried)
+                    out=cleanResponse(self.text,lines)
+                    # interpretacion de la respuesta del analisis dinamico
+                    analysis_dynamic=validateError(out)
+                    answer = None
+                    analysis_static=True
+                    # si no hay erroresen el analisis dinamico
+                    if not analysis_dynamic:
+                        responseAnalyst=ca.postAnalysis(self.id_question,self.text)
+                        if responseAnalyst:
+                            responseAnalyst=json.loads(responseAnalyst)
+                            if ( 'REJECTED' == responseAnalyst["status"]):
+                                analysis_static = True
+                            else:
+                                analysis_static=False
+                    if len(out) != 0:
+                        try:
+                            answer = Answer.add_Answer("".join(out),analysis_dynamic, analysis_static)
+                        except:
+                            logging.error('Error save answer to the DB')
+                    lines = []
+                    pipeout(out,self.id_user,self.id_message,self.id_question,self.nro_tried,answer)
             else:
                 lines.append(decode_line)
         # Una vez que se alcanza este código, el contenedor está muerto

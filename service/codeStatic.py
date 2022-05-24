@@ -1,3 +1,4 @@
+import logging
 import os
 import requests
 import json
@@ -11,4 +12,4 @@ def postAnalysis(id_question,code):
                 # print content of request
                 return json.dumps(r.json())
         except Exception:
-            print("Error envio analisis estatico")   
+            logging.ERROR("Error send comunication with server analysis static")

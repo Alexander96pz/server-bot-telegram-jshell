@@ -11,7 +11,7 @@ from config.bd import *
 from models.user import  User
 from models.question import Question
 from models.message import Message
-from models.answer import Answer
+from models.questionnaire import Questionnaire
 
 import repl
 
@@ -54,14 +54,14 @@ def mode(update, context):
     options = [#                     nombre en el boton, value = "python"   
                 InlineKeyboardButton("Java (jshell bot)", callback_data="java"),
                 ]
-    answer=Answer.find_Answer(update._effective_user.id)
+    questionnaire=Questionnaire.find_Questionnaire(update._effective_user.id)
     # Si es la primera vez que va a iniciar el entorno
-    if answer is None:
+    if questionnaire is None:
         context.chat_data["mode"] = 1
         update.message.reply_text("Selecciona el lenguaje de programación",reply_markup=InlineKeyboardMarkup.from_column(options))
     else:  
-        # obtengo la ultima pregunta respondida correctamente    
-        question=Question.getQuestion(answer.id_question+1)
+        # obtengo la ultima pregunta respondida correctamente
+        question=Question.getQuestion(questionnaire.id_question+1)
         if question is None:
             options = [
                     InlineKeyboardButton("SI", callback_data="si"),
@@ -69,6 +69,7 @@ def mode(update, context):
                     ]
             update.message.reply_text("La última vez ya completaste el cuestionario.\nDeseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
         else:
+
             context.chat_data["mode"] = 1
             update.message.reply_text("Selecciona el lenguaje de programación \nRecuerda que para salir del entorno usa el comando /exit",reply_markup=InlineKeyboardMarkup.from_column(options))
     
@@ -122,36 +123,36 @@ def button(update, context):
             if update.callback_query.data == "si":
                 question=Question.getQuestion(1)
                 context.chat_data["mode"] = 1
-                answer=Answer.find_Answer(update._effective_user.id)
+                questionnaire=Questionnaire.find_Questionnaire(update._effective_user.id)
                 # obtener el nro de intento actual+1,de esta forma se el numero del cuestionario
-                nro_tried=answer.tried+1
+                nro_tried=questionnaire.tried+1
             else:
-                answer=Answer.find_Answer(update._effective_user.id)
-                # Permite verificar si es o no la primera interaccion en modo entorno
-                if answer is None:
+                questionnaire = Questionnaire.find_Questionnaire(update._effective_user.id)
+                # Permite verificar si es la primera interaccion en modo entorno
+                if questionnaire is None:
                     question=Question.getQuestion(1)
                     nro_tried=1
                 else:
-                    nro_tried=answer.tried
-                    question=Question.getQuestion(answer.id_question+1)
+                    nro_tried=questionnaire.tried
+                    question=Question.getQuestion(questionnaire.id_question+1)
             message.edit_reply_markup()  # remueve los botones
 
             # salida del interprete
-            def pipeout(out,analisisDinamico,id_user,id_message,id_question,analisisStatic,nro_tried):
-                # si la lista esta vacia?
-                if not out:
+            def pipeout(out,id_user,id_message,id_question, nro_tried, answer):
+                # si no hay respuesta
+                if answer == None:
                     pass
                 else:
                     try:
-                        Answer.addAnswer(id_question,id_message,id_user,analisisDinamico,"".join(out),nro_tried)
-                    except Exception  as err:
-                        print("Error adding Answer",err)
+                        Questionnaire.addQuestionnaire(id_question,id_message,id_user,answer.id_answer,nro_tried)
+                    except Exception as err:
+                        logging.error('Error save questionnaire in BD')
                     finally:
                         for o in out:
                             message.reply_text("<code>"+o+"</code>",parse_mode=ParseMode.HTML)
-                        if not analisisDinamico and not analisisStatic:
+                        if not answer.analysis_dynamic and not answer.analysis_static:
                             message.reply_text("<b>Correcto! bien echo</b>",parse_mode=ParseMode.HTML)
-                            question=Question.getQuestion(id_question+1)
+                            question = Question.getQuestion(id_question+1)
                             repl.next(context.chat_data["container"])
                             if question is not None:
                                 q="<b>RESUELVE: "+question.text_question+"</b>"
@@ -164,7 +165,7 @@ def button(update, context):
                                 ]
                                 message.reply_text("FELICIDADES! terminaste con exito. Deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
                         else:
-                            if analisisDinamico:
+                            if answer.analysis_dynamic:
                                 message.reply_text("<b>Error en la sintaxis! intentalo de nuevo amigo</b>",parse_mode=ParseMode.HTML)  
                             else:      
                                 message.reply_text("<b>No hay errores de sintaxis, pero la solución es incorrecta</b>",parse_mode=ParseMode.HTML)  
