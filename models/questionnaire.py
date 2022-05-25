@@ -38,7 +38,6 @@ class Questionnaire(Base):
 
     def addQuestionnaire(id_question, id_message, id_user, id_answer, nroTried=0):
         session = Session()
-        print("se guardara",nroTried)
         questionnaire = Questionnaire(id_question=id_question,
                                       id_message=id_message,
                                       id_user=id_user,

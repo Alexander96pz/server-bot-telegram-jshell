@@ -5,6 +5,7 @@ import json
 from models.answer import Answer
 import logging
 
+
 MESSAGE_LIMIT = 4096
 
 def launch(lang, pipeout, on_close,id_question,nro_tried):

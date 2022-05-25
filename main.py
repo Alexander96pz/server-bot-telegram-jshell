@@ -1,14 +1,15 @@
-from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode
+from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode,ChatAction
 from telegram.ext import *
 from dotenv import load_dotenv
 import logging
 import sys
-# import re
-import os
+
+import asyncio
+# import os
 
 # BASE DE DATOS
 from config.bd import *
-from models.user import  User
+from models.user import User
 from models.question import Question
 from models.message import Message
 from models.questionnaire import Questionnaire
@@ -50,39 +51,48 @@ def mode(update, context):
     # En un mensaje válido, borra los datos existentes y establece un nuevo mode    .
     # args = drop_command(update.message.text, "/mode")
     # 1. REPL mode
-    drop_data(update, context)
-    options = [#                     nombre en el boton, value = "python"   
-                InlineKeyboardButton("Java (jshell bot)", callback_data="java"),
-                ]
-    questionnaire=Questionnaire.find_Questionnaire(update._effective_user.id)
-    # Si es la primera vez que va a iniciar el entorno
-    if questionnaire is None:
-        context.chat_data["mode"] = 1
-        update.message.reply_text("Selecciona el lenguaje de programación",reply_markup=InlineKeyboardMarkup.from_column(options))
-    else:  
-        # obtengo la ultima pregunta respondida correctamente
-        question=Question.getQuestion(questionnaire.id_question+1)
-        if question is None:
-            options = [
-                    InlineKeyboardButton("SI", callback_data="si"),
-                    InlineKeyboardButton("NO", callback_data="no"),
+    async def typing():
+        context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING,timeout=10)
+    asyncio.run(typing())
+    if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" in context.chat_data:
+        update.message.reply_text("El entorno ya se encuentra iniciado")
+    else:
+        # drop_data(update, context)
+        options = [#                     nombre en el boton, value = "python"
+                    InlineKeyboardButton("Java (jshell bot)", callback_data="java"),
                     ]
-            update.message.reply_text("La última vez ya completaste el cuestionario.\nDeseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
-        else:
-
+        questionnaire=Questionnaire.find_Questionnaire(update._effective_user.id)
+        # Si es la primera vez que va a iniciar el entorno
+        if questionnaire is None:
             context.chat_data["mode"] = 1
-            update.message.reply_text("Selecciona el lenguaje de programación \nRecuerda que para salir del entorno usa el comando /exit",reply_markup=InlineKeyboardMarkup.from_column(options))
-    
+            update.message.reply_text("Selecciona el lenguaje de programación",reply_markup=InlineKeyboardMarkup.from_column(options))
+        else:
+            # obtengo la ultima pregunta respondida correctamente
+            question=Question.getQuestion(questionnaire.id_question+1)
+            if question is None:
+                options = [
+                        InlineKeyboardButton("SI", callback_data="si"),
+                        InlineKeyboardButton("NO", callback_data="no"),
+                        ]
+                update.message.reply_text("La última vez ya completaste el cuestionario.\nDeseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
+            else:
+                context.chat_data["mode"] = 1
+                update.message.reply_text("Selecciona el lenguaje de programación \nRecuerda que para salir del entorno usa el comando /exit",reply_markup=InlineKeyboardMarkup.from_column(options))
+# @send_action(ChatAction.TYPING)
 def exit(update, context):
     # Elimina cualquier instancia de contenedor que se esté ejecutando actualmente
     if "container" in context.chat_data:
         if context.chat_data["mode"] == 1:
-            repl.kill(context.chat_data["container"])
-        # if context.chat_data["mode"] == 2:
-        #     batch.kill(context.chat_data["container"])
-        update.message.reply_text("Entorno Finalizado, recuerda /mode para volver a iniciar")
+            async def drop():
+                task = asyncio.create_task( drop_data(update, context))
+                update.message.reply_text("Haz finalizado el entorno, recuerda /mode para volver a iniciar")
+                # await task
+            asyncio.run(drop())
+            # async def typing():
+            #     context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING,timeout=10)
+            # asyncio.run(typing())
     else:
-        update.message.reply_text("Entorno no Inicializado, usa /mode para inicializar")
+        update.message.reply_text("Aun no has inicializado el entorno, primero usa /mode")
 
 # Message handlers
 
@@ -158,12 +168,23 @@ def button(update, context):
                                 q="<b>RESUELVE: "+question.text_question+"</b>"
                                 message.reply_text(q,parse_mode=ParseMode.HTML)
                             else:
-                                repl.kill(context.chat_data["container"])
-                                options = [
-                                    InlineKeyboardButton("SI", callback_data="si"),
-                                    InlineKeyboardButton("NO", callback_data="no"),
-                                ]
-                                message.reply_text("FELICIDADES! terminaste con exito. Deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
+                                # async def drop():
+                                #     task = asyncio.create_task(drop_data(update, context))
+                                    options = [
+                                        InlineKeyboardButton("SI", callback_data="si"),
+                                        InlineKeyboardButton("NO", callback_data="no"),
+                                    ]
+                                    message.reply_text("FELICIDADES! terminaste con exito. Deseas repetir?",
+                                                       reply_markup=InlineKeyboardMarkup.from_column(options))
+                                    # await task
+
+                                # asyncio.run(drop())
+                                # repl.kill(context.chat_data["container"])
+                                # options = [
+                                #     InlineKeyboardButton("SI", callback_data="si"),
+                                #     InlineKeyboardButton("NO", callback_data="no"),
+                                # ]
+                                # message.reply_text("FELICIDADES! terminaste con exito. Deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
                         else:
                             if answer.analysis_dynamic:
                                 message.reply_text("<b>Error en la sintaxis! intentalo de nuevo amigo</b>",parse_mode=ParseMode.HTML)  
@@ -187,12 +208,10 @@ def button(update, context):
                 context.chat_data["container"] = container
 
 # mezcla de funciones
-def drop_data(update, context):
+async def drop_data(update, context):
     # Limpia todos los chatdatas y resetea los stados del bot.
     if "container" in context.chat_data:
         repl.kill(context.chat_data["container"])
-    context.user_data["mode"] = 0
-    # update.message.reply_text("Datos existentes limpios!")
 
 # Initializacion del bot
 def main():
