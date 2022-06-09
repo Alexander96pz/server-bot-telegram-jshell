@@ -6,7 +6,7 @@ class Question(Base):
     __tablename__= 'question'
     id_question = Column(Integer,primary_key=True,autoincrement=True)
     text_question = Column(String(3000),nullable=False)
-    # solucion?
+    prerequisites = Column(String(3000),nullable=True)
 
     def getQuestion(number):
         Session = sessionmaker(bind=engine)

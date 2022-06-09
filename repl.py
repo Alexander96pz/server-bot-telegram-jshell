@@ -3,13 +3,14 @@ import threading
 import service.codeStatic as ca
 import json
 from models.answer import Answer
+from models.question import Question
 import logging
 
 
 MESSAGE_LIMIT = 4096
 
-def launch(lang, pipeout, on_close,id_question,nro_tried):
-    return Repl(lang, pipeout, on_close,id_question,nro_tried)
+def launch(lang, pipeout, on_close,question,nro_tried):
+    return Repl(lang, pipeout, on_close,question,nro_tried)
 
 def pipein(instance, text, message):
     instance.pipein(text,message)
@@ -68,7 +69,7 @@ def validateError(lines):
             return False
 
 class Repl:
-    def __init__(self, lang, pipeout, on_close,id_question,nro_tried):
+    def __init__(self, lang, pipeout, on_close,question,nro_tried):
         # Genera un contenedor con el intérprete para el idioma dado.
         # Devuelve una instancia del contenedor.
         # pipeout es una función que toma una cadena y la envía de vuelta al usuario.
@@ -79,7 +80,8 @@ class Repl:
         self.text = ''
         self.id_user = 0
         self.id_message=0
-        self.id_question=id_question
+        self.id_question=question.id_question
+        self.prerequisites=question.prerequisites
         self.nro_tried = nro_tried
         # Language seleccion
         if lang == "java":
@@ -103,8 +105,11 @@ class Repl:
         # No devuelve nada.
         self.id_message=message.id_message
         self.id_user = message.fk_id_user
-        self.text=text
-        self.input.send(text.encode('utf-8')) # Convercion a bytes
+        if(self.prerequisites is None):
+            self.text = text
+        else:
+            self.text = self.prerequisites+text
+        self.input.send(self.text.encode('utf-8')) # Convercion a bytes
     # Parar un contenedor
     def kill(self):
         self.client.stop(self.container) # Elimino/Stop el contenedor
@@ -152,6 +157,11 @@ class Repl:
     
     def NextQuestion(self):
         self.id_question+=1
+        question=Question.getQuestion(self.id_question)
+        if question is None:
+            pass
+        else:
+            self.prerequisites = question.prerequisites
 
     def setTried(self):
         self.nro_tried+=1

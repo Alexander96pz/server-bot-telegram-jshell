@@ -88,9 +88,6 @@ def exit(update, context):
                 update.message.reply_text("Haz finalizado el entorno, recuerda /mode para volver a iniciar")
                 # await task
             asyncio.run(drop())
-            # async def typing():
-            #     context.bot.send_chat_action(chat_id=update.effective_message.chat_id, action=ChatAction.TYPING,timeout=10)
-            # asyncio.run(typing())
     else:
         update.message.reply_text("Aun no has inicializado el entorno, primero usa /mode")
 
@@ -156,7 +153,7 @@ def button(update, context):
                     try:
                         Questionnaire.addQuestionnaire(id_question,id_message,id_user,answer.id_answer,nro_tried)
                     except Exception as err:
-                        logging.error('Error save questionnaire in BD')
+                        logging.error('Error save questionnaire in BD: ',err)
                     finally:
                         for o in out:
                             message.reply_text("<code>"+o+"</code>",parse_mode=ParseMode.HTML)
@@ -168,23 +165,12 @@ def button(update, context):
                                 q="<b>RESUELVE: "+question.text_question+"</b>"
                                 message.reply_text(q,parse_mode=ParseMode.HTML)
                             else:
-                                # async def drop():
-                                #     task = asyncio.create_task(drop_data(update, context))
                                     options = [
                                         InlineKeyboardButton("SI", callback_data="si"),
                                         InlineKeyboardButton("NO", callback_data="no"),
                                     ]
                                     message.reply_text("FELICIDADES! terminaste con exito. Deseas repetir?",
                                                        reply_markup=InlineKeyboardMarkup.from_column(options))
-                                    # await task
-
-                                # asyncio.run(drop())
-                                # repl.kill(context.chat_data["container"])
-                                # options = [
-                                #     InlineKeyboardButton("SI", callback_data="si"),
-                                #     InlineKeyboardButton("NO", callback_data="no"),
-                                # ]
-                                # message.reply_text("FELICIDADES! terminaste con exito. Deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
                         else:
                             if answer.analysis_dynamic:
                                 message.reply_text("<b>Error en la sintaxis! intentalo de nuevo amigo</b>",parse_mode=ParseMode.HTML)  
@@ -203,7 +189,8 @@ def button(update, context):
                             ]
                 message.reply_text("Has finalizado el cuestionario correctamente. Deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
             else:
-                container = repl.launch(lang, pipeout, on_close,question.id_question,nro_tried)
+
+                container = repl.launch(lang, pipeout, on_close,question,nro_tried)
                 message.reply_text("<b>RESUELVE: "+question.text_question+"</b>",parse_mode=ParseMode.HTML)
                 context.chat_data["container"] = container
 
