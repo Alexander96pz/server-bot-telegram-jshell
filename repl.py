@@ -18,8 +18,8 @@ def pipein(instance, text, message):
 def kill(instance):
     instance.kill()
 
-def next(instance):
-    instance.NextQuestion()
+def next(instance,question):
+    instance.NextQuestion(question)
 
 def next_tried(instance):
     instance.setTried()
@@ -148,19 +148,21 @@ class Repl:
                         except:
                             logging.error('Error save answer to the DB')
                     lines = []
-                    pipeout(out,self.id_user,self.id_message,self.id_question,self.nro_tried,answer)
+                    try:
+                        pipeout(out,self.id_user,self.id_message,self.id_question,self.nro_tried,answer)
+                    except:
+                        logging.ERROR("Error en la envio del pipeout")
             else:
                 lines.append(decode_line)
         # Una vez que se alcanza este código, el contenedor está muerto
         self.on_close()
         self.client.remove_container(self.container) # elimino el container
     
-    def NextQuestion(self):
-        self.id_question+=1
-        question=Question.getQuestion(self.id_question)
+    def NextQuestion(self,question):
         if question is None:
             pass
         else:
+            self.id_question=question.id_question
             self.prerequisites = question.prerequisites
 
     def setTried(self):

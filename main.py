@@ -68,7 +68,9 @@ def mode(update, context):
             update.message.reply_text("Selecciona el lenguaje de programación",reply_markup=InlineKeyboardMarkup.from_column(options))
         else:
             # obtengo la ultima pregunta respondida correctamente
-            question=Question.getQuestion(questionnaire.id_question+1)
+            question = Question.nextQuestion(questionnaire.id_question)
+            # print(q)
+            # question=Question.getQuestion(questionnaire.id_question+1)
             if question is None:
                 options = [
                         InlineKeyboardButton("SI", callback_data="si"),
@@ -141,7 +143,7 @@ def button(update, context):
                     nro_tried=1
                 else:
                     nro_tried=questionnaire.tried
-                    question=Question.getQuestion(questionnaire.id_question+1)
+                    question=Question.nextQuestion(questionnaire.id_question)
             message.edit_reply_markup()  # remueve los botones
 
             # salida del interprete
@@ -159,8 +161,8 @@ def button(update, context):
                             message.reply_text("<code>"+o+"</code>",parse_mode=ParseMode.HTML)
                         if not answer.analysis_dynamic and not answer.analysis_static:
                             message.reply_text("<b>Correcto! bien echo</b>",parse_mode=ParseMode.HTML)
-                            question = Question.getQuestion(id_question+1)
-                            repl.next(context.chat_data["container"])
+                            question = Question.nextQuestion(id_question)
+                            repl.next(context.chat_data["container"],question)
                             if question is not None:
                                 q="<b>RESUELVE: "+question.text_question+"</b>"
                                 message.reply_text(q,parse_mode=ParseMode.HTML)
@@ -189,7 +191,6 @@ def button(update, context):
                             ]
                 message.reply_text("Has finalizado el cuestionario correctamente. Deseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
             else:
-
                 container = repl.launch(lang, pipeout, on_close,question,nro_tried)
                 message.reply_text("<b>RESUELVE: "+question.text_question+"</b>",parse_mode=ParseMode.HTML)
                 context.chat_data["container"] = container
