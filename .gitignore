@@ -1,5 +1,6 @@
-/__pycache__
+/__pycache__/
 /.idea
-/models/__pycache__/
-/config/__pycache__/
+*.pyc
+src/components/__pycache__/*
 .env
+setup.sh
