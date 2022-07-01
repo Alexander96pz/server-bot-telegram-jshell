@@ -3,4 +3,4 @@
 *.pyc
 src/components/__pycache__/*
 .env
-setup.sh
+*.sh
