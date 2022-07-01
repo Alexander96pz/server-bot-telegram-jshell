@@ -1,0 +1,17 @@
+on: 
+        push:
+                branches: 'dev'
+name: deploy 
+jobs:
+        deploy:
+                name: publish to dockerhub
+                runs-on: ubuntu-latest
+                steps:
+                        - name: checkout code
+                          uses: actions/checkout@v2
+                        - name: Build the Docker images
+                          run: docker build -t alexander96pz/main -f dockerfiles/main-dockerfile .
+                        - name: login dockerhub
+                          run: docker login -u ${{secrets.DOCKERHUB_USERNAME}} -p ${{secrets.DOCKERHUB_PASSWORD}}
+                        - name: push imagen
+                          run: docker push alexander96pz/main
