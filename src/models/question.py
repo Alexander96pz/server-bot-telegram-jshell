@@ -9,9 +9,9 @@ class Question(Base):
     id_question = Column(Integer,primary_key=True,autoincrement=True)
     text_question = Column(String(3000),nullable=False)
     prerequisites = Column(String(3000),nullable=True)
+    posrequisites = Column(String(3000), nullable=True)
 
     def getQuestion(number):
-
         session = Session()
         question = session.query(Question).filter(Question.id_question == number).first()
         session.close()
@@ -24,16 +24,3 @@ class Question(Base):
             .order_by(asc(Question.id_question)).limit(1).first()
         session.close()
         return question
-
-    # SELECT
-    # id
-    # FROM
-    # mi_tabla
-    # WHERE
-    # id > $id_archivo
-    # ORDER
-    # BY
-    # id
-    # ASC
-    # LIMIT
-    # 1;

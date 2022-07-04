@@ -1,4 +1,4 @@
-from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode,ChatAction
+from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ChatAction,ReplyKeyboardMarkup
 
 import asyncio
 
@@ -17,20 +17,17 @@ def mode(update, context):
     if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" in context.chat_data:
         update.message.reply_text("El entorno ya se encuentra iniciado")
     else:
-        # drop_data(update, context)
         options = [#                     nombre en el boton, value = "python"
                     InlineKeyboardButton("Java (jshell bot)", callback_data="java"),
                     ]
         questionnaire=Questionnaire.find_Questionnaire(update._effective_user.id)
-        # Si es la primera vez que va a iniciar el entorno
+        # Si es la primera vez que van a interactuar con el entorno - to new users
         if questionnaire is None:
             context.chat_data["mode"] = 1
             update.message.reply_text("Selecciona el lenguaje de programación",reply_markup=InlineKeyboardMarkup.from_column(options))
         else:
             # obtengo la ultima pregunta respondida correctamente
             question = Question.nextQuestion(questionnaire.id_question)
-            # print(q)
-            # question=Question.getQuestion(questionnaire.id_question+1)
             if question is None:
                 options = [
                         InlineKeyboardButton("SI", callback_data="si"),

@@ -49,8 +49,11 @@ def button(update, context):
                     except Exception as err:
                         logging.error('Error save questionnaire in BD: ',err)
                     finally:
-                        for o in out:
-                            message.reply_text("<code>"+o+"</code>",parse_mode=ParseMode.HTML)
+                        try:
+                            for o in out:
+                                message.reply_text(o)
+                        except:
+                            logging.ERROR("Error al envio respuesta a telegram")
                         if not answer.analysis_dynamic and not answer.analysis_static:
                             message.reply_text("<b>Correcto! bien echo</b>",parse_mode=ParseMode.HTML)
                             question = Question.nextQuestion(id_question)

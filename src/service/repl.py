@@ -27,27 +27,25 @@ def get_tried(instance):
 
 # metodo para limpiar mensajes de salida del REPL
 def cleanResponse(text,listas):
-    lista2=[]  # lista auxiliar
-    if(text[-2:].find(";")== 0):
-        text=text[:-2]
-        for l in listas:
-            if(l.find(text) != -1):
-                lista2.append(l.replace(text,""))
-            else:
-                lista2.append(l)
-        listas=lista2
-    else:
-        for l in listas:
-            if(l.find(text[:-1]) != -1):
-                lista2.append(l.replace(text[:-1],""))
-            else:
-                lista2.append(l)
-        listas=lista2
     for l in listas:
-        # Eliminamos los mensajes iniciales del REPL
         if l.find("Welcome to JShell") != -1:
             listas = []
             return listas
+    lista2=[]  # lista auxiliar
+    if(text[-2:].find(";") != -1):
+        text=text[:-2]
+    else:
+        pass
+    for l in listas:
+        if(l.find(text) != -1):
+            lista2.append(l.replace(text,""))
+        else:
+            lista2.append(l)
+    if(lista2[0].find("|  Error:") != -1):
+        linea=lista2[0]
+        num=lista2[0].find("|")
+        lista2[0] = linea[num:]
+    listas = lista2
     return listas
 
 # Interpretacion de Resultados / Analisis Dinamico
@@ -69,7 +67,6 @@ def validateError(lines):
 
 class Repl:
     def __init__(self, lang, pipeout, on_close,question,nro_tried):
-        # Genera un contenedor con el intérprete para el idioma dado.
         # Devuelve una instancia del contenedor.
         # pipeout es una función que toma una cadena y la envía de vuelta al usuario.
         # Úsada para enviar salida estándar desde el contenedor.
@@ -78,9 +75,10 @@ class Repl:
         self.lang = lang
         self.text = ''
         self.id_user = 0
-        self.id_message=0
-        self.id_question=question.id_question
-        self.prerequisites=question.prerequisites
+        self.id_message = 0
+        self.id_question = question.id_question
+        self.prerequisites = question.prerequisites
+        self.posrequisites = question.posrequisites
         self.nro_tried = nro_tried
         # Language seleccion
         if lang == "java":
@@ -108,6 +106,11 @@ class Repl:
             self.text = text
         else:
             self.text = self.prerequisites+text
+        if(self.posrequisites is None):
+            self.text=text
+        else:
+            self.text = text+self.posrequisites
+        self.text += '\n'
         self.input.send(self.text.encode('utf-8')) # Convercion a bytes
     # Parar un contenedor
     def kill(self):
@@ -163,6 +166,7 @@ class Repl:
         else:
             self.id_question=question.id_question
             self.prerequisites = question.prerequisites
+            self.posrequisites = question.posrequisites
 
     def setTried(self):
         self.nro_tried+=1

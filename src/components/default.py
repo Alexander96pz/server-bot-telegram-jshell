@@ -18,7 +18,7 @@ def default(update, context):
                 message=Message.addMessage(update,update._effective_user.id)
                 raw_input = update.message.text
             stdin = raw_input.strip().replace('\n',"")
-            repl.pipein(context.chat_data["container"], stdin + "\n", message)
+            repl.pipein(context.chat_data["container"], stdin, message)
         else:
             update.message.reply_text("Primero inicia el entorno para comenzar a programar /mode")
     else:
