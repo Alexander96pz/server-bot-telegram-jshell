@@ -1,4 +1,4 @@
-from sqlalchemy import Column,Integer,String,ForeignKey,DateTime
+from sqlalchemy import Column,Integer,String,ForeignKey,DateTime,BIGINT
 import datetime
 from sqlalchemy.orm import sessionmaker
 from config.bd import Base,engine
@@ -9,7 +9,7 @@ class Message(Base):
     id_message = Column(Integer,primary_key=True,unique=True)
     date = Column(DateTime,default=datetime.datetime.now())
     text= Column(String(1000),nullable=False)
-    fk_id_user=Column(Integer,ForeignKey('user.id_user'))
+    fk_id_user=Column(BIGINT,ForeignKey('user.id_user'))
 
     def addMessage(update,id_user):
         session = Session()

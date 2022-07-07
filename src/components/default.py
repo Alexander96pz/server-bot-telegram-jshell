@@ -1,4 +1,6 @@
 # BASE DE DATOS
+import logging
+
 from config.bd import *
 from models.message import Message
 
@@ -18,7 +20,10 @@ def default(update, context):
                 message=Message.addMessage(update,update._effective_user.id)
                 raw_input = update.message.text
             stdin = raw_input.strip().replace('\n',"")
-            repl.pipein(context.chat_data["container"], stdin, message)
+            try:
+                repl.pipein(context.chat_data["container"], stdin, message)
+            except Exception:
+                logging.ERROR("Problems send text to analysis")
         else:
             update.message.reply_text("Primero inicia el entorno para comenzar a programar /mode")
     else:

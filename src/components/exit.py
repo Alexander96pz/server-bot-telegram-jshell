@@ -10,7 +10,7 @@ def exit(update, context):
     if "container" in context.chat_data:
         if context.chat_data["mode"] == 1:
             async def drop():
-                task = asyncio.create_task( drop_data(update, context))
+                asyncio.create_task( drop_data(update, context))
                 update.message.reply_text("Haz finalizado el entorno, recuerda /mode para volver a iniciar")
                 # await task
             asyncio.run(drop())

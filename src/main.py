@@ -15,15 +15,15 @@ from components.button import button
 # Initializacion del bot
 def main():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    load_dotenv('../.env')
     try:
         # Conexion BD
         Base.metadata.create_all(engine)
-        logging.info('BD funcionando correctamente') 
+        logging.info('BD funcionando correctamente')
     except Exception:
-        logging.error('Error in the conexion to the DB')
+        logging.error('Error in the connection to the DB')
     finally:
         # configuracion de los entornos de variables
-        load_dotenv('../.env')
         # actualizaciones provenientes de telegram
         updater = Updater(token=os.getenv('API_KEY'), use_context=True)
         # despachador nos permite clasificar las actualizaciones

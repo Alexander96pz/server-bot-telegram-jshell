@@ -12,8 +12,10 @@ def launch(lang, pipeout, on_close,question,nro_tried):
     return Repl(lang, pipeout, on_close,question,nro_tried)
 
 def pipein(instance, text, message):
-    instance.pipein(text,message)
-
+    try:
+        instance.pipein(text,message)
+    except Exception:
+        logging.ERROR("error pipein")
 def kill(instance):
     instance.kill()
 
@@ -35,6 +37,7 @@ def cleanResponse(text,listas):
     if(text[-2:].find(";") != -1):
         text=text[:-2]
     else:
+        text=text[:-1]
         pass
     for l in listas:
         if(l.find(text) != -1):
@@ -107,7 +110,7 @@ class Repl:
         else:
             self.text = self.prerequisites+text
         if(self.posrequisites is None):
-            self.text=text
+            pass
         else:
             self.text = text+self.posrequisites
         self.text += '\n'
@@ -137,13 +140,11 @@ class Repl:
                     analysis_static=True
                     # si no hay erroresen el analisis dinamico
                     if not analysis_dynamic:
-                        responseAnalyst=ca.postAnalysis(self.id_question,self.text)
-                        if responseAnalyst:
-                            responseAnalyst=json.loads(responseAnalyst)
-                            if ( 'REJECTED' == responseAnalyst["status"]):
-                                analysis_static = True
-                            else:
-                                analysis_static=False
+                        # if error en el analisis estatico True else False
+                        try:
+                            analysis_static=ca.postAnalysis(self.id_question,self.text)
+                        except Exception:
+                            logging.ERROR("Problems with the server of Analysis Static")
                     if len(out) != 0:
                         try:
                             answer = Answer.add_Answer("".join(out),analysis_dynamic, analysis_static)
@@ -167,9 +168,3 @@ class Repl:
             self.id_question=question.id_question
             self.prerequisites = question.prerequisites
             self.posrequisites = question.posrequisites
-
-    def setTried(self):
-        self.nro_tried+=1
-
-    def getTried(self):
-        return self.nro_tried

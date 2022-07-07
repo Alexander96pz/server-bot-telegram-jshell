@@ -2,6 +2,7 @@ import logging
 import os
 import requests
 import json
+# Conexion al servidor de Analisis Estatico
 # Making a POST request
 def postAnalysis(id_question,code):
     if (len(code) > 0):
@@ -10,6 +11,12 @@ def postAnalysis(id_question,code):
             # success code - 200
             if(r.status_code == 200):
                 # print content of request
-                return json.dumps(r.json())
+                responseAnalyst = json.dumps(r.json())
+                if responseAnalyst:
+                    responseAnalyst = json.loads(responseAnalyst)
+                    if ('REJECTED' == responseAnalyst["status"]):
+                        return True
+                    else:
+                        return False
         except Exception:
             logging.ERROR("Error send comunication with server analysis static")

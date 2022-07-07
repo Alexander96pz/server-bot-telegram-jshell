@@ -1,4 +1,4 @@
-from sqlalchemy import Column,Integer,String,Boolean,DateTime
+from sqlalchemy import Column,Integer,String,Boolean,DateTime,BIGINT
 import datetime
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
@@ -6,10 +6,10 @@ from config.bd import Base,engine
 
 class User(Base):
     __tablename__ = 'user'
-    id_user = Column(Integer,primary_key=True,unique=True)
+    id_user = Column(BIGINT,primary_key=True,unique=True)
     first_name = Column(String(50),nullable=False)
     is_bot = Column(Boolean, nullable=True)
-    username = Column(String(50),nullable=False)
+    username = Column(String(50),nullable=True)
     lenguaje_code = Column(String(10),nullable=True)
     createdAt = Column(DateTime,default=datetime.datetime.now())
     id_message = relationship("Message")
