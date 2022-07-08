@@ -16,7 +16,7 @@ def pipein(instance, text, message):
         instance.pipein(text,message)
     except Exception:
         logging.ERROR("error pipein")
-def kill(instance):
+async def kill(instance):
     instance.kill()
 
 def next(instance,question):
