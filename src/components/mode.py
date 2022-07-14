@@ -31,7 +31,7 @@ def mode(update, context):
             if question is None:
                 options = [
                         InlineKeyboardButton("SI", callback_data="si"),
-                        InlineKeyboardButton("NO", callback_data="no"),
+                        InlineKeyboardButton("NO", callback_data="cancel"),
                         ]
                 update.message.reply_text("La última vez ya completaste el cuestionario.\nDeseas repetir?",reply_markup=InlineKeyboardMarkup.from_column(options))
             else:

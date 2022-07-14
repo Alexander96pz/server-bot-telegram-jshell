@@ -1,3 +1,5 @@
+import asyncio
+
 from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode
 import logging
 
@@ -9,14 +11,22 @@ from service import repl
 
 def button(update, context):
     # Si el usuario no desea repetir el cuestionario de preguntas
+    if update.callback_query.data == "cancel":
+        update.callback_query.message.edit_reply_markup()
+        if "container" in context.chat_data:
+            update.callback_query.message.reply_text(
+                "Si quieres salir del entorno usa el comando /exit")
+        else:
+            update.callback_query.message.reply_text(
+                "Recuerda para iniciar el entorno usa el comando /mode")
     if update.callback_query.data == "no":
         update.callback_query.message.edit_reply_markup()
         update.callback_query.message.reply_text("Espero que regreses, nunca dejes de aprender. Recuerda /mode para iniciar el entorno")
         if "container" in context.chat_data:
-            repl.kill(context.chat_data["container"])
+            asyncio.run(repl.kill(context.chat_data["container"]))
     else:
         # Cuando el usuario si desea repetir el cuestionario de preguntas
-        if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data or update.callback_query.data == "si":
+        if ("mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data) or update.callback_query.data == "si":
             query = update.callback_query
             message = query.message
             lang = "java"
@@ -88,4 +98,6 @@ def button(update, context):
             else:
                 container = repl.launch(lang, pipeout, on_close, question, nro_tried)
                 message.reply_text("<b>RESUELVE: "+question.text_question+"</b>",parse_mode=ParseMode.HTML)
+                if "container" in context.chat_data:
+                    asyncio.run(repl.kill(context.chat_data["container"]))
                 context.chat_data["container"] = container
