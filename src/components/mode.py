@@ -21,9 +21,9 @@ def mode(update, context):
     if "mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" in context.chat_data:
         update.message.reply_text("El entorno ya se encuentra iniciado")
     else:
-        options = [#                     nombre en el boton, value = "python"
-                    InlineKeyboardButton("Java (jshell bot)", callback_data="java"),
-                    ]
+        # options = [#                     nombre en el boton, value = "python"
+        #             InlineKeyboardButton("Java (jshell bot)", callback_data="java"),
+        #             ]
         questionnaire=Questionnaire.find_Questionnaire(update._effective_user.id)
         # Si es la primera vez que van a interactuar con el entorno - to new users
         if questionnaire is None:
@@ -79,8 +79,8 @@ def entorno(update,context):
                         question = Question.nextQuestion(id_question)
                         repl.next(context.chat_data["container"], question)
                         if question is not None:
-                            q = "<b>RESUELVE: " + question.text_question + "</b>"
-                            message.reply_text(q, parse_mode=ParseMode.HTML)
+                            q = "RESUELVE: " + question.text_question
+                            message.reply_text(q)
                         else:
                             options = [
                                 InlineKeyboardButton("SI", callback_data="si"),
@@ -110,7 +110,7 @@ def entorno(update,context):
             questionnaire = Questionnaire.find_Questionnaire(update._effective_user.id)
             nro_tried = questionnaire.tried + 1
         container = repl.launch(lang, pipeout, on_close, question, nro_tried)
-        message.reply_text("<b>RESUELVE: " + question.text_question + "</b>", parse_mode=ParseMode.HTML)
+        message.reply_text("RESUELVE: " + question.text_question)
         if "container" in context.chat_data:
             asyncio.run(repl.kill(context.chat_data["container"]))
         context.chat_data["container"] = container
