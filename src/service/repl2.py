@@ -42,7 +42,7 @@ class Repl2:
         # Language selection
         if lang == "java":
             self.container = self.client.create_container(
-                image="java-repl",
+                image="alexander96pz/java-repl",
                 stdin_open=True,
                 detach=True,
                 tty=False
