@@ -57,7 +57,7 @@ def validateError(lines):
     validate2=False
     if len(lines) == 0:
         return True
-    else:    
+    else:
         for l in lines:
             if l.find("Error:") != -1:
                 validate1=True
@@ -67,7 +67,6 @@ def validateError(lines):
             return True
         else:
             return False
-
 class Repl:
     def __init__(self, lang, pipeout, on_close,question,nro_tried):
         # Devuelve una instancia del contenedor.
