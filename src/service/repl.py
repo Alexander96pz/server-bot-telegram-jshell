@@ -76,12 +76,15 @@ class Repl:
         self.on_close = on_close
         self.lang = lang
         self.text = ''
+        self.snippet = ''
         self.id_user = 0
         self.id_message = 0
         self.id_question = question.id_question
         self.prerequisites = question.prerequisites
         self.posrequisites = question.posrequisites
         self.nro_tried = nro_tried
+        self.valor = question.valor
+        self.console = question.console
         # Language seleccion
         if lang == "java":
             self.container = self.client.create_container(
@@ -104,6 +107,7 @@ class Repl:
         # No devuelve nada.
         self.id_message=message.id_message
         self.id_user = message.fk_id_user
+        self.snippet = text
         if(self.prerequisites is None):
             self.text = text
         else:
@@ -111,7 +115,7 @@ class Repl:
         if(self.posrequisites is None):
             pass
         else:
-            self.text = text+self.posrequisites
+            self.text = self.text+self.posrequisites
         self.text += '\n'
         self.input.send(self.text.encode('utf-8')) # Convercion a bytes
     # Parar un contenedor
@@ -141,7 +145,7 @@ class Repl:
                     if not analysis_dynamic:
                         # if error en el analisis estatico True else False
                         try:
-                            analysis_static=ca.postAnalysis(self.id_question,self.text)
+                            analysis_static = ca.postAnalysis(self.id_question, self.snippet, self.prerequisites, self.posrequisites, self.valor, self.console)
                         except Exception:
                             logging.ERROR("Problems with the server of Analysis Static")
                     if len(out) != 0:
@@ -159,7 +163,7 @@ class Repl:
         # Una vez que se alcanza este código, el contenedor está muerto
         self.on_close()
         self.client.remove_container(self.container) # elimino el container
-    
+
     def NextQuestion(self,question):
         if question is None:
             pass
@@ -167,3 +171,5 @@ class Repl:
             self.id_question=question.id_question
             self.prerequisites = question.prerequisites
             self.posrequisites = question.posrequisites
+            self.valor = question.valor
+            self.console = question.console

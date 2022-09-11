@@ -15,10 +15,6 @@ class Questionnaire(Base):
     id_message = Column(ForeignKey("message.id_message"))
     id_user = Column(ForeignKey("user.id_user"))
     id_answer = Column(ForeignKey("answer.id_answer"))
-    # nos permitira conocer si la respuesta es correcta o no
-    # isError= Column(Boolean,nullable=False)
-    # text_answer=Column(String(400),nullable=True)
-    # intento
     tried=Column(Integer,nullable=True,default=0)
     createdAt=Column(DateTime,default=datetime.datetime.now())
 

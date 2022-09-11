@@ -10,6 +10,8 @@ class Question(Base):
     text_question = Column(String(3000),nullable=False)
     prerequisites = Column(String(3000),nullable=True)
     posrequisites = Column(String(3000), nullable=True)
+    valor = Column(String(100), nullable=True)
+    console = Column(String(100), nullable=True)
 
     def getQuestion(number):
         session = Session()
