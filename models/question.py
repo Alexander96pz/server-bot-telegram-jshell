@@ -1,6 +1,6 @@
 from sqlalchemy import Column,Integer,String,asc
 from sqlalchemy.orm import sessionmaker
-from config.bd import Base,engine
+from settings.bd import Base,engine
 
 Session = sessionmaker(bind=engine)
 # pregunta

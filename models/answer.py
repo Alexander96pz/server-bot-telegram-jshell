@@ -1,4 +1,4 @@
-from config.bd import Base,engine
+from settings.bd import Base,engine
 from sqlalchemy import Column,Integer,String,Boolean
 from sqlalchemy.orm import sessionmaker
 

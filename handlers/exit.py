@@ -1,7 +1,7 @@
-from components.drop import drop_data
+from handlers.drop import drop_data
 import asyncio
 # BASE DE DATOS
-from config.bd import *
+from settings.bd import *
 
 def exit(update, context):
     # Elimina cualquier instancia de contenedor que se esté ejecutando actualmente

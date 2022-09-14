@@ -4,16 +4,27 @@ import logging
 import sys
 
 # BASE DE DATOS
-from config.bd import *
+from settings.bd import *
 
-from components.start import start
-from components.exit import exit
-from components.mode import mode
-from components.default import default
-from components.button import button
+from handlers.start import start
+from handlers.exit import exit
+from handlers.mode import mode
+from handlers.default import default
+from handlers.button import button
 
-# Initializacion del bot
-def main():
+def setup_dispatcher(dp):
+    """
+        Adding handlers for events from Telegram
+    """
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("mode", mode))
+    dp.add_handler(CommandHandler("exit", exit))
+    dp.add_handler(MessageHandler(Filters.text, default))
+    dp.add_handler(CallbackQueryHandler(button))
+    return dp
+
+
+def run_polling():
     logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     load_dotenv('../.env')
     try:
@@ -29,13 +40,7 @@ def main():
         # despachador nos permite clasificar las actualizaciones
         dp = updater.dispatcher
         # Add handlers//controladores
-        dp.add_handler(CommandHandler("start", start))
-        dp.add_handler(CommandHandler("mode", mode))
-        dp.add_handler(CommandHandler("exit", exit))
-        dp.add_handler(MessageHandler(Filters.text, default))
-        dp.add_handler(CallbackQueryHandler(button))
-        #Comienza a sondear las actualizaciones de telegram
+        dp = setup_dispatcher(dp)
+        # Comienza a sondear las actualizaciones de telegram
         updater.start_polling()
         updater.idle()
-if __name__ == '__main__':
-    main()

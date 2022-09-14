@@ -1,6 +1,6 @@
 import asyncio
 
-from service import repl
+from services import repl
 # mezcla de funciones
 async def drop_data(update, context):
     # Limpia todos los chatdatas y resetea los stados del bot.

@@ -1,13 +1,13 @@
 import asyncio
 
-from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode,ReplyKeyboardMarkup
+from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode
 import logging
 
 # BASE DE DATOS
-from config.bd import *
 from models.question import Question
 from models.questionnaire import Questionnaire
-from service import repl,repl2
+from services import repl, repl2
+
 
 def button(update, context):
     update.callback_query.message.edit_reply_markup()

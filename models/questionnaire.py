@@ -1,7 +1,7 @@
 from sqlalchemy import Column,ForeignKey, Integer, DateTime
 import datetime
 from sqlalchemy.orm import sessionmaker
-from config.bd import Base,engine
+from settings.bd import Base,engine
 from models.message import Message
 from models.answer import Answer
 from sqlalchemy import desc
@@ -29,20 +29,19 @@ class Questionnaire(Base):
             .filter(Answer.analysis_static == False)\
             .order_by(desc(Questionnaire.id_questionnaire)).first()
         session.close()
-        # questionnaire=("questionario: ",questionnaire.id_questionnaire)
         return questionnaire
 
     def addQuestionnaire(id_question, id_message, id_user, id_answer, nroTried=0):
         session = Session()
-        questionnaire = Questionnaire(id_question=id_question,
-                                      id_message=id_message,
-                                      id_user=id_user,
-                                      id_answer=id_answer,
-                                      # isError=isError,
-                                      # text_answer=text_answer,
-                                      tried=nroTried)
+        questionnaire = Questionnaire(
+            id_question=id_question,
+            id_message=id_message,
+            id_user=id_user,
+            id_answer=id_answer,
+            # isError=isError,
+            # text_answer=text_answer,
+            tried=nroTried)
         session.add(questionnaire)
-        # session.refresh(questionnaire)
         session.commit()
         session.close()
         return questionnaire

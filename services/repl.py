@@ -1,7 +1,6 @@
 import docker
 import threading
-import service.codeStatic as ca
-import json
+import services.codeStatic as ca
 from models.answer import Answer
 import logging
 

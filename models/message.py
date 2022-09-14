@@ -1,7 +1,7 @@
 from sqlalchemy import Column,Integer,String,ForeignKey,DateTime,BIGINT
 import datetime
 from sqlalchemy.orm import sessionmaker
-from config.bd import Base,engine
+from settings.bd import Base,engine
 
 Session = sessionmaker(bind=engine)
 class Message(Base):

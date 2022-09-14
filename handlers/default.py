@@ -1,12 +1,12 @@
 # BASE DE DATOS
 import logging
-
-from config.bd import *
 from models.message import Message
+from telegram import Update
+from telegram.ext import CallbackContext
 
-from service import repl,repl2
+from services import repl,repl2
 
-def default(update, context):
+def default(update:Update, context: CallbackContext):
     # Llamado en cualquier mensaje de texto que no sea de orden
     #  En el modo 1, canaliza el mensaje al contenedor si existe.
     # if mode se encuentra in the context.chat_data[] y tiene el valor de 1 en referencia de iniciar entorno

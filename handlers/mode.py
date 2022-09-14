@@ -1,9 +1,8 @@
-from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ChatAction,ReplyKeyboardMarkup
-
+from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ChatAction
 import asyncio
 
 # BASE DE DATOS
-from config.bd import *
+from settings.bd import *
 from models.question import Question
 from models.questionnaire import Questionnaire
 

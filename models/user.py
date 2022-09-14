@@ -2,7 +2,7 @@ from sqlalchemy import Column,Integer,String,Boolean,DateTime,BIGINT
 import datetime
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
-from config.bd import Base,engine
+from settings.bd import Base,engine
 
 class User(Base):
     __tablename__ = 'user'
