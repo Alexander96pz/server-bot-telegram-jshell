@@ -1,12 +1,8 @@
-from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ChatAction
+from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ChatAction,Update
+from telegram.ext import CallbackContext
 import asyncio
 
-# BASE DE DATOS
-from settings.bd import *
-from models.question import Question
-from models.questionnaire import Questionnaire
-
-def mode(update, context):
+def mode(update: Update, context: CallbackContext):
     # En un mensaje válido, borra los datos existentes y establece un nuevo mode    .
     # args = drop_command(update.message.text, "/mode")
     # 1. REPL mode
@@ -21,4 +17,4 @@ def mode(update, context):
                     InlineKeyboardButton("Libre", callback_data="opcion2"),
                     ]
         update.message.reply_text("Selecciona el modo de interaccion",
-                                  reply_markup=InlineKeyboardMarkup.from_column(options))
+                        reply_markup=InlineKeyboardMarkup.from_column(options))

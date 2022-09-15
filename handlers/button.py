@@ -1,6 +1,6 @@
 import asyncio
-
-from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode
+from telegram import InlineKeyboardButton,InlineKeyboardMarkup,ParseMode,Update
+from telegram.ext import CallbackContext
 import logging
 
 # BASE DE DATOS
@@ -9,17 +9,18 @@ from models.questionnaire import Questionnaire
 from services import repl, repl2
 
 
-def button(update, context):
+def button(update: Update, context: CallbackContext):
     update.callback_query.message.edit_reply_markup()
+    # si el usuario selecciona el botton no
     if update.callback_query.data == "no":
         update.callback_query.message.reply_text("Espero que regreses, nunca dejes de aprender. Recuerda /mode para iniciar el entorno")
         if "container" in context.chat_data:
             temp=context.chat_data["container"]
             context.chat_data.pop("container")
             asyncio.run(repl.kill(temp))
-
         if "mode" in context.chat_data:
             context.chat_data.pop("mode")
+    # si el usuario selecciona booton si
     elif update.callback_query.data == "si":
         if "mode" not in context.chat_data:
             context.chat_data["mode"]=1
@@ -36,12 +37,10 @@ def button(update, context):
                         context.bot.send_message(update.effective_message.chat_id, "<b>"+question.text_question+"</b>", parse_mode=ParseMode.HTML)
                     else:
                         pass
+
     elif update.callback_query.data == "opcion1":
         if ("mode" in context.chat_data and context.chat_data["mode"]!=0):
-            print("Opcion1")
-            print(context.chat_data["mode"])
             pass
-            # update.message.reply_text("Primero cierra el entorno /exit")
         else:
             context.chat_data["mode"] = 1
             methodQuestion(update,context)
@@ -67,7 +66,7 @@ def button(update, context):
                 container = repl2.launch2(lan, pipeout2, on_close2)
                 context.chat_data["container"] = container
         # Cuando el usuario si desea repetir el cuestionario de preguntas
-def methodQuestion(update,context):
+def methodQuestion(update: Update,context: CallbackContext):
     if ("mode" in context.chat_data and context.chat_data["mode"] == 1 and "container" not in context.chat_data):
         query = update.callback_query
         message = query.message
@@ -119,19 +118,21 @@ def methodQuestion(update,context):
                                 InlineKeyboardButton("NO", callback_data="no"),
                             ]
                             message.reply_text("FELICIDADES! terminaste con exito. Deseas repetir?",
-                                               reply_markup=InlineKeyboardMarkup.from_column(options))
+                                reply_markup=InlineKeyboardMarkup.from_column(options))
                     else:
                         if answer.analysis_dynamic:
                             message.reply_text("<b>Error en la sintaxis! intentalo de nuevo amigo</b>",
-                                               parse_mode=ParseMode.HTML)
+                                parse_mode=ParseMode.HTML)
                         else:
                             message.reply_text("<b>No hay errores de sintaxis, pero la solución es incorrecta</b>",
-                                               parse_mode=ParseMode.HTML)
+                                            parse_mode=ParseMode.HTML)
                 # controlamos que la cadena no contengan espacios en blanco para reenviar texto
 
         # elimina del item chat_data la identificacion contenedor
         def on_close():
-            context.chat_data.pop("container", None)
+            context.chat_data.pop("mode")
+            context.chat_data.pop("container",None)
+
 
         # Si has respondido todas las preguntas
         if (question is None):
@@ -141,7 +142,7 @@ def methodQuestion(update,context):
                 InlineKeyboardButton("NO", callback_data="no"),
             ]
             message.reply_text("Ya has finalizado el cuestionario correctamente. Deseas repetir?",
-                               reply_markup=InlineKeyboardMarkup.from_column(options))
+                            reply_markup=InlineKeyboardMarkup.from_column(options))
             if "container" in context.chat_data:
                 temp=context.chat_data["container"]
                 context.chat_data.pop("container")

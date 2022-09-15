@@ -4,7 +4,6 @@ import services.codeStatic as ca
 from models.answer import Answer
 import logging
 
-
 MESSAGE_LIMIT = 4096
 
 def launch(lang, pipeout, on_close,question,nro_tried):
@@ -100,6 +99,10 @@ class Repl:
         # Inicializo listener
         self.listener = threading.Thread(target = self.__listen, args = [pipeout])
         self.listener.start()
+        # stop el entorno/contenedor automaticamente 1 hora
+        self.temporizer_container = threading.Timer(3600,self.on_close)
+        self.temporizer_container.start()
+
 
     def pipein(self, text, message):
         # Envía la cadena de texto al contenedor como entrada estándar.
@@ -120,7 +123,6 @@ class Repl:
     # Parar un contenedor
     def kill(self):
         self.client.stop(self.container) # Elimino/Stop el contenedor
-
     # RESPUESTA del REPL
     def __listen(self, pipeout):
         # obtengo las salidas o registros(logs) del contenedor

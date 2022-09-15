@@ -1,9 +1,9 @@
 from handlers.drop import drop_data
+from telegram import Update
+from telegram.ext import CallbackContext
 import asyncio
-# BASE DE DATOS
-from settings.bd import *
 
-def exit(update, context):
+def exit(update: Update, context: CallbackContext):
     # Elimina cualquier instancia de contenedor que se esté ejecutando actualmente
     if "container" in context.chat_data:
         if context.chat_data["mode"] == 1 or context.chat_data["mode"] == 2 :
