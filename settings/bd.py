@@ -5,5 +5,5 @@ from dotenv import load_dotenv
 # varuiables de entorno
 load_dotenv('.env')
 #motor de conexion            user:password
-engine = create_engine('mysql+pymysql://'+os.getenv('DB_KEYL'))
+engine = create_engine('mysql+pymysql://'+os.getenv('DB_KEY'))
 Base=declarative_base()
